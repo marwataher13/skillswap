@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,7 +40,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F5F2),
+      backgroundColor: AppColors.background,
       body: Center(
         child: FadeTransition(
           opacity: _animation,
@@ -49,11 +50,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                    color: AppColors.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.shadow.withOpacity(0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -62,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: const Icon(
                   LucideIcons.refreshCw,
                   size: 60,
-                  color: Color(0xFF6B4F3D),
+                  color: AppColors.primaryDark,
                 ),
               ),
               const SizedBox(height: 24),
@@ -72,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  color: Color(0xFF6B4F3D),
+                  color: AppColors.primaryDark,
                 ),
               ),
               const SizedBox(height: 8),
@@ -80,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 'Exchange Knowledge',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey.shade500,
+                  color: AppColors.textHint,
                   fontWeight: FontWeight.w400,
                 ),
               ),

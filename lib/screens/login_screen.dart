@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF7A5A48), AppColors.gradientEnd],
+          colors: [AppColors.gradientStart, AppColors.gradientEnd],
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(AppSpacing.radiusXl),
@@ -93,10 +93,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       LucideIcons.refreshCw,
                       size: 22,
-                      color: Colors.white,
+                      color: AppColors.surface,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: AppColors.surface,
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppColors.surface,
                   letterSpacing: -0.3,
                 ),
               ),
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: Colors.white.withOpacity(0.70),
+                  color: AppColors.surface.withOpacity(0.70),
                 ),
               ),
             ],

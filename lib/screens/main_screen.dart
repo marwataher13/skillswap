@@ -38,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.shadow.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -48,11 +48,11 @@ class _MainScreenState extends State<MainScreen> {
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          backgroundColor: Colors.white,
+          backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.textSecondary,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontSize: 12),
+          selectedLabelStyle: AppTextStyles.labelSmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.primary),
+          unselectedLabelStyle: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(LucideIcons.home, size: 24),

@@ -88,7 +88,7 @@ class HomeScreen extends StatelessWidget {
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         boxShadow: AppShadows.subtle,
       ),
@@ -118,7 +118,7 @@ class HomeScreen extends StatelessWidget {
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: isFirst ? const Color(0xFFD7C4B7) : Colors.white,
+              color: isFirst ? AppColors.primaryLight : AppColors.surface,
               borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
               border: Border.all(color: AppColors.border.withOpacity(0.5)),
             ),
@@ -147,7 +147,7 @@ class HomeScreen extends StatelessWidget {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFE8DDD6), // لون الكارد من الصورة
+        color: AppColors.border, // Using border color for card
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
       ),
       child: Column(
@@ -175,7 +175,7 @@ class HomeScreen extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD7C4B7),
+                        backgroundColor: AppColors.primaryLight,
                         minimumSize: const Size(100, 36),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                       ),

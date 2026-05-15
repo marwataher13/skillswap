@@ -139,7 +139,7 @@ class PrimaryButton extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.3,
-            color: Colors.white,
+            color: AppColors.surface,
           ),
         ),
       ),
@@ -357,7 +357,7 @@ class AuthTabSwitcher extends StatelessWidget {
                 fontWeight: FontWeight.w600,
 
                 color: isSelected
-                    ? Colors.white
+                    ? AppColors.surface
                     : AppColors.textSecondary,
               ),
             ),

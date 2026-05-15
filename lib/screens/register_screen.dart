@@ -105,7 +105,7 @@ class _RegisterScreenState
           end: Alignment.bottomRight,
 
           colors: [
-            Color(0xFF7A5A48),
+            AppColors.gradientStart,
             AppColors.gradientEnd,
           ],
         ),
@@ -153,10 +153,10 @@ class _RegisterScreenState
                             BorderRadius.circular(10),
                       ),
 
-                      child: const Icon(
+                      child: Icon(
                         LucideIcons.arrowLeft,
                         size: 18,
-                        color: Colors.white,
+                        color: AppColors.surface,
                       ),
                     ),
                   ),
@@ -169,7 +169,7 @@ class _RegisterScreenState
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white.withOpacity(
+                      color: AppColors.surface.withOpacity(
                         0.90,
                       ),
                     ),
@@ -185,7 +185,7 @@ class _RegisterScreenState
                 style: GoogleFonts.poppins(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: AppColors.surface,
                   letterSpacing: -0.3,
                 ),
               ),
@@ -198,7 +198,7 @@ class _RegisterScreenState
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
-                  color: Colors.white.withOpacity(
+                  color: AppColors.surface.withOpacity(
                     0.70,
                   ),
                 ),

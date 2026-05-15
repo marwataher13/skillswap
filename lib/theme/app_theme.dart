@@ -5,27 +5,26 @@ import 'package:google_fonts/google_fonts.dart';
 class AppColors {
   AppColors._();
 
-  static const Color primary = Color(0xFF6B4F3D);
-  static const Color primaryDark = Color(0xFF4B3621);
-  static const Color primaryLight = Color(0xFF8D6E5A);
+  static const Color background = Color(0xFFE6DED5); // Light Beige
+  static const Color inputFill = Color(0xFFF0EBE6); // Lighter Soft Beige
+  static const Color primary = Color(0xFFC9A892); // Warm Beige
+  static const Color textPrimary = Color(0xFF4B3F39); // Dark Brown
+  static const Color textSecondary = Color(0xFF5A4A42); // Dark Brown
+  static const Color textHint = Color(0xFF9C9087); // Gray Brown
+  static const Color divider = Color(0xFFD8D0C8); // Light Gray
+  static const Color surface = Color(0xFFFFFFFF); // White
+  static const Color border = Color(0xFFCBB8A7); // Light Beige Border
 
-  static const Color background = Color(0xFFF4F0EC); // Parchment
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF9F5F1);
-  static const Color inputFill = Color(0xFFF5EFE9);
+  // Using existing primary and textPrimary for these
+  static const Color primaryDark = Color(0xFF4B3F39);
+  static const Color primaryLight = Color(0xFFD7C4B7);
 
-  static const Color textPrimary = Color(0xFF2D1F17);
-  static const Color textSecondary = Color(0xFF7A6B64);
-  static const Color textHint = Color(0xFFAAA09A);
+  static const Color surfaceVariant = Color(0xFFF9F5F1); // Kept from previous
+  static const Color shadow = Color(0xFF4B3F39); // Using textPrimary for shadow
 
-  static const Color border = Color(0xFFE8DDD6);
-  static const Color divider = Color(0xFFE0D5CD);
-
-  static const Color shadow = Color(0xFF6B4F3D);
-
-  // Gradient stops
-  static const Color gradientStart = Color(0xFF7A5A48);
-  static const Color gradientEnd = Color(0xFF4B3621);
+  // Gradient stops derived from new primary colors
+  static const Color gradientStart = Color(0xFFC9A892);
+  static const Color gradientEnd = Color(0xFFB09D8B);
 }
 
 // ─── Spacing / Radius Tokens ─────────────────────────────────────────────────
@@ -50,58 +49,58 @@ class AppSpacing {
 class AppTextStyles {
   AppTextStyles._();
 
-  static TextStyle displayLarge = const TextStyle(
+  static TextStyle displayLarge = GoogleFonts.poppins(
     fontSize: 34,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle displayMedium = const TextStyle(
+  static TextStyle displayMedium = GoogleFonts.poppins(
     fontSize: 28,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.3,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle headlineLarge = const TextStyle(
+  static TextStyle headlineLarge = GoogleFonts.poppins(
     fontSize: 24,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle headlineMedium = const TextStyle(
+  static TextStyle headlineMedium = GoogleFonts.poppins(
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle titleMedium = const TextStyle(
+  static TextStyle titleMedium = GoogleFonts.poppins(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle bodyLarge = const TextStyle(
+  static TextStyle bodyLarge = GoogleFonts.poppins(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle bodyMedium = const TextStyle(
+  static TextStyle bodyMedium = GoogleFonts.poppins(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 
-  static TextStyle labelMedium = const TextStyle(
+  static TextStyle labelMedium = GoogleFonts.poppins(
     fontSize: 13,
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
     letterSpacing: 0.1,
   );
 
-  static TextStyle labelSmall = const TextStyle(
+  static TextStyle labelSmall = GoogleFonts.poppins(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textHint,
