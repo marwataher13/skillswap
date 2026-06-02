@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -13,9 +14,11 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _authService = AuthService();
 
   @override
   void dispose() {
@@ -26,6 +29,69 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _navigateToRegister() {
     Navigator.pushReplacementNamed(context, '/register');
+  }
+
+  // ── Validation ──────────────────────────────
+  String? _validate() {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || !email.contains('@')) {
+      return 'Please enter a valid email address';
+    }
+    if (password.isEmpty) {
+      return 'Please enter your password';
+    }
+    return null;
+  }
+
+  // ── Submit ───────────────────────────────────
+  Future<void> _handleLogin() async {
+    FocusScope.of(context).unfocus();
+
+    final validationError = _validate();
+    if (validationError != null) {
+      _showSnackBar(validationError, isError: true);
+      return;
+    }
+
+    if (mounted) setState(() => _isLoading = true);
+
+    try {
+      final result = await _authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.isSuccess) {
+        await AuthService.saveToken(result.token ?? '');
+        if (!mounted) return;
+        _showSnackBar('Logged in successfully! Welcome back.', isError: false);
+        Navigator.pushReplacementNamed(context, '/main');
+      } else {
+        _showSnackBar(result.error!, isError: true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showSnackBar('Something went wrong: $e', isError: true);
+    }
+  }
+
+  // ── Helpers ──────────────────────────────────
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.redAccent : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   @override
@@ -90,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
@@ -131,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.surface.withOpacity(0.70),
+                  color: AppColors.surface.withValues(alpha: 0.70),
                 ),
               ),
             ],
@@ -156,9 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
           AuthTabSwitcher(
             selectedIndex: 0,
             onTabSelected: (index) {
-              if (index == 1) {
-                _navigateToRegister();
-              }
+              if (index == 1) _navigateToRegister();
             },
           ),
 
@@ -188,9 +252,7 @@ class _LoginScreenState extends State<LoginScreen> {
             textInputAction: TextInputAction.done,
             suffixIcon: GestureDetector(
               onTap: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
+                setState(() => _obscurePassword = !_obscurePassword);
               },
               child: Padding(
                 padding: const EdgeInsets.only(right: 4),
@@ -207,7 +269,9 @@ class _LoginScreenState extends State<LoginScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.pushNamed(context, '/forgot_password');
+              },
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -226,12 +290,14 @@ class _LoginScreenState extends State<LoginScreen> {
           const SizedBox(height: 8),
 
           // Login Button
-          PrimaryButton(
-            label: 'Log In',
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/main');
-            },
-          ),
+          _isLoading
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              : PrimaryButton(label: 'Log In', onPressed: _handleLogin),
         ],
       ),
     );
@@ -240,27 +306,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildSocialSection() {
     return Column(
       children: [
-        const AuthDivider(),
-
-        const SizedBox(height: 20),
-
-        // Google
-        SocialButton(
-          assetPath: 'assets/images/google.png',
-          label: 'Continue with Google',
-          onTap: () {},
-        ),
-
         const SizedBox(height: 12),
-
-        // Apple
-        SocialButton(
-          assetPath: 'assets/images/apple.png',
-          label: 'Continue with Apple',
-          onTap: () {},
-        ),
-
-        const SizedBox(height: 28),
 
         // Navigate to Register
         Row(

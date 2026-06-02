@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../screens/chat_list_screen.dart'; // import to refer to ChatItemData structure
+import '../models/chat_item_data.dart';
 import '../theme/app_theme.dart';
 
 class ChatCard extends StatelessWidget {

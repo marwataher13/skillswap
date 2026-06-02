@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:skillswap/screens/chat_list_screen.dart';
 import '../theme/app_theme.dart';
 import 'home_screen.dart'; // الشاشة اللي عملناها سوا
 
@@ -17,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const Center(child: Text('Skills Screen')), // استبدليها بملف شاشة المهارات
-    const Center(child: Text('Chat Screen')),   // استبدليها بملف شاشة الشات
+    const ChatListScreen(),   // استبدليها بملف شاشة الشات
     const Center(child: Text('Profile Screen')), // استبدليها بملف شاشة البروفايل
   ];
 
@@ -38,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withOpacity(0.05),
+              color: AppColors.shadow.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),

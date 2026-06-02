@@ -88,7 +88,7 @@ class AppTextField extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-// elevated buttom
+// Elevated Button
 // ─────────────────────────────────────────────────────────────
 class PrimaryButton extends StatelessWidget {
   final String label;
