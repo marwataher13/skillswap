@@ -1,15 +1,28 @@
 class SkillCardData {
-  final String image;
+  final int id;
+  final String name;
+  final String type;
+  final String description;
+  final String level;
   final String category;
-  final String title;
-  final String exchange;
-  final String user;
 
   const SkillCardData({
-    required this.image,
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.description,
+    required this.level,
     required this.category,
-    required this.title,
-    required this.exchange,
-    required this.user,
   });
+
+  factory SkillCardData.fromJson(Map<String, dynamic> json) {
+    return SkillCardData(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      type: json['type'] ?? '',
+      description: json['description'] ?? '',
+      level: json['level'] ?? '',
+      category: json['category']?['name'] ?? '',
+    );
+  }
 }

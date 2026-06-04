@@ -1,0 +1,166 @@
+import 'package:flutter/foundation.dart';
+import 'package:skillswap/config/app_config.dart';
+
+/// Immutable data class representing the user's profile.
+@immutable
+class ProfileData {
+  final String name;
+  final String bio;
+  final String phone;
+  final String? avatarUrl;
+
+  const ProfileData({
+    required this.name,
+    required this.bio,
+    required this.phone,
+    this.avatarUrl,
+  });
+
+  factory ProfileData.fromJson(Map<String, dynamic> json) {
+    debugPrint('=== PROFILE FROM JSON ===');
+    debugPrint('JSON: $json');
+
+    // Auto-unwrap nested structure if present
+    Map<String, dynamic> targetJson = json;
+    if (json.containsKey('data') && json['data'] is Map) {
+      targetJson = Map<String, dynamic>.from(json['data'] as Map);
+    } else if (json.containsKey('user') && json['user'] is Map) {
+      targetJson = Map<String, dynamic>.from(json['user'] as Map);
+    } else if (json.containsKey('profile') && json['profile'] is Map) {
+      targetJson = Map<String, dynamic>.from(json['profile'] as Map);
+    }
+
+    final avatarVal = targetJson['profile_picture'] ?? targetJson['avatar_url'] ?? targetJson['avatar'];
+    String? resolvedAvatar;
+    if (avatarVal is String) {
+      resolvedAvatar = avatarVal;
+    } else if (avatarVal is Map) {
+      resolvedAvatar = avatarVal['profile_picture'] as String? ??
+          avatarVal['avatar_url'] as String? ??
+          avatarVal['url'] as String? ??
+          avatarVal['path'] as String? ??
+          avatarVal['file_url'] as String?;
+    }
+
+    if (resolvedAvatar != null && resolvedAvatar.isNotEmpty && !resolvedAvatar.startsWith('http')) {
+      final baseUrlClean = AppConfig.baseUrl.endsWith('/')
+          ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
+          : AppConfig.baseUrl;
+      final pathClean = resolvedAvatar.startsWith('/') ? resolvedAvatar : '/$resolvedAvatar';
+      resolvedAvatar = '$baseUrlClean$pathClean';
+    }
+
+    return ProfileData(
+      name: targetJson['name'] as String? ?? '',
+      bio: targetJson['bio'] as String? ?? '',
+      phone: targetJson['phone'] as String? ?? '',
+      avatarUrl: resolvedAvatar,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    String? cleanUrl = avatarUrl;
+    if (cleanUrl != null && cleanUrl.contains('?t=')) {
+      cleanUrl = cleanUrl.split('?t=').first;
+    } else if (cleanUrl != null && cleanUrl.contains('&t=')) {
+      cleanUrl = cleanUrl.split('&t=').first;
+    }
+    return {
+      'name': name,
+      'bio': bio,
+      'phone': phone,
+      'avatar_url': cleanUrl,
+      'profile_picture': cleanUrl,
+    };
+  }
+
+  ProfileData copyWith({
+    String? name,
+    String? bio,
+    String? phone,
+    String? avatarUrl,
+    bool clearAvatar = false,
+  }) {
+    return ProfileData(
+      name: name ?? this.name,
+      bio: bio ?? this.bio,
+      phone: phone ?? this.phone,
+      avatarUrl: clearAvatar ? null : (avatarUrl ?? this.avatarUrl),
+    );
+  }
+}
+
+/// Supported portfolio file types.
+enum FileType { image, pdf, word }
+
+/// A single item in the portfolio grid.
+class PortfolioItem {
+  final String id;
+  final String title;
+  final FileType type;
+  final String? fileUrl;
+
+  const PortfolioItem({
+    required this.id,
+    required this.title,
+    required this.type,
+    this.fileUrl,
+  });
+
+  factory PortfolioItem.fromJson(Map<String, dynamic> json) {
+    final fileVal = json['file'];
+    String? resolvedUrl;
+    if (fileVal is String) {
+      resolvedUrl = fileVal;
+    } else if (fileVal is Map) {
+      resolvedUrl = fileVal['url'] as String? ??
+          fileVal['path'] as String? ??
+          fileVal['file_url'] as String?;
+    }
+
+    resolvedUrl ??= json['file_url'] as String? ??
+        json['url'] as String? ??
+        json['path'] as String?;
+
+    if (resolvedUrl != null && resolvedUrl.isNotEmpty && !resolvedUrl.startsWith('http')) {
+      final baseUrlClean = AppConfig.baseUrl.endsWith('/')
+          ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
+          : AppConfig.baseUrl;
+      final pathClean = resolvedUrl.startsWith('/') ? resolvedUrl : '/$resolvedUrl';
+      resolvedUrl = '$baseUrlClean$pathClean';
+    }
+
+    final titleVal = json['title'] ?? json['name'] ?? json['file_name'] ?? json['original_name'];
+    final titleString = titleVal?.toString().toLowerCase() ?? '';
+    final typeString = (json['type'] as String? ?? '').toLowerCase();
+    final urlString = (resolvedUrl ?? '').toLowerCase();
+
+    FileType resolvedType = FileType.image;
+    if (typeString.contains('pdf') || titleString.endsWith('.pdf') || urlString.endsWith('.pdf') || urlString.contains('.pdf?')) {
+      resolvedType = FileType.pdf;
+    } else if (typeString.contains('word') || typeString.contains('doc') || typeString.contains('msword') || typeString.contains('officedocument') ||
+        titleString.endsWith('.doc') || titleString.endsWith('.docx') ||
+        urlString.endsWith('.doc') || urlString.endsWith('.docx') ||
+        urlString.contains('.doc?') || urlString.contains('.docx?')) {
+      resolvedType = FileType.word;
+    } else {
+      resolvedType = FileType.image;
+    }
+
+    return PortfolioItem(
+      id: (json['id'] ?? '').toString(),
+      title: titleVal?.toString() ?? '',
+      type: resolvedType,
+      fileUrl: resolvedUrl,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'type': type.name,
+      'file_url': fileUrl,
+    };
+  }
+}

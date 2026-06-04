@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../services/password_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -14,6 +15,7 @@ class NewPasswordScreen extends StatefulWidget {
 class _NewPasswordScreenState extends State<NewPasswordScreen> {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _passwordService = PasswordService();
 
   bool _isLoading = false;
   bool _obscureNew = true;
@@ -21,15 +23,28 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   bool _showNewPasswordError = false;
   bool _showConfirmPasswordError = false;
   String _confirmErrorText = 'Confirm password is required';
+  String _newPasswordErrorText = 'Password must be at least 8 characters';
+
+  String _email = '';
+  String _token = '';
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    _email = args?['email'] as String? ?? '';
+    _token = args?['token'] as String? ?? '';
+  }
 
   @override
   void initState() {
     super.initState();
     _newPasswordController.addListener(() {
       if (_showNewPasswordError &&
-          _newPasswordController.text.trim().isNotEmpty) {
+          _newPasswordController.text.trim().length >= 8) {
         setState(() => _showNewPasswordError = false);
       }
     });
@@ -48,32 +63,45 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     super.dispose();
   }
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
+  // ── Validation ─────────────────────────────────────────────────────────────
 
-  void _onUpdatePasswordPressed() {
-    final newPass = _newPasswordController.text.trim();
-    final confirmPass = _confirmPasswordController.text.trim();
-    bool hasError = false;
+  bool _validate() {
+    final newPass = _newPasswordController.text;
+    final confirmPass = _confirmPasswordController.text;
+    bool valid = true;
 
     if (newPass.isEmpty || newPass.length < 8) {
-      setState(() => _showNewPasswordError = true);
-      hasError = true;
+      setState(() {
+        _newPasswordErrorText = newPass.isEmpty
+            ? 'Password is required'
+            : 'Password must be at least 8 characters';
+        _showNewPasswordError = true;
+      });
+      valid = false;
     }
+
     if (confirmPass.isEmpty) {
       setState(() {
         _confirmErrorText = 'Confirm password is required';
         _showConfirmPasswordError = true;
       });
-      hasError = true;
+      valid = false;
     } else if (newPass != confirmPass) {
       setState(() {
         _confirmErrorText = 'Passwords do not match';
         _showConfirmPasswordError = true;
       });
-      hasError = true;
+      valid = false;
     }
 
-    if (hasError) return;
+    return valid;
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
+  Future<void> _onUpdatePasswordPressed() async {
+    FocusScope.of(context).unfocus();
+    if (!_validate()) return;
 
     setState(() {
       _showNewPasswordError = false;
@@ -81,15 +109,38 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      // ── Navigate to PasswordResetSuccessScreen, clearing the stack ──
+    final result = await _passwordService.resetPassword(
+      email: _email,
+      password: _newPasswordController.text,
+      passwordConfirmation: _confirmPasswordController.text,
+      token: _token,
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess) {
       Navigator.pushReplacementNamed(context, '/password-reset-success');
-    });
+    } else {
+      _showSnackBar(result.error ?? 'Failed to reset password', isError: true);
+    }
   }
 
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError
+            ? const Color.fromARGB(255, 205, 36, 36)
+            : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
+  }
 
   // ── Build ──────────────────────────────────────────────────────────────────
 
@@ -244,7 +295,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
           if (_showNewPasswordError) ...[
             const SizedBox(height: 6),
             Text(
-              'Password must be at least 8 characters',
+              _newPasswordErrorText,
               style: GoogleFonts.poppins(fontSize: 12, color: AppColors.error),
             ),
           ],

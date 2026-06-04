@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:skillswap/screens/chat_list_screen.dart';
+import 'package:skillswap/screens/my_skills_screen.dart';
+import 'package:skillswap/screens/setting_screen.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart'; // الشاشة اللي عملناها سوا
+import 'home_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,12 +16,11 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  // قائمة الشاشات (ضيفي باقي الشاشات لما تخلصيها)
   final List<Widget> _screens = [
     const HomeScreen(),
-    const Center(child: Text('Skills Screen')), // استبدليها بملف شاشة المهارات
-    const ChatListScreen(),   // استبدليها بملف شاشة الشات
-    const Center(child: Text('Profile Screen')), // استبدليها بملف شاشة البروفايل
+    const MySkillsScreen(),
+    const ChatListScreen(),
+    const SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -31,10 +32,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -52,8 +50,13 @@ class _MainScreenState extends State<MainScreen> {
           backgroundColor: AppColors.surface,
           selectedItemColor: AppColors.primary,
           unselectedItemColor: AppColors.textSecondary,
-          selectedLabelStyle: AppTextStyles.labelSmall.copyWith(fontWeight: FontWeight.w600, color: AppColors.primary),
-          unselectedLabelStyle: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+          selectedLabelStyle: AppTextStyles.labelSmall.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.primary,
+          ),
+          unselectedLabelStyle: AppTextStyles.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(LucideIcons.home, size: 24),
@@ -69,8 +72,8 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Chat',
             ),
             BottomNavigationBarItem(
-              icon: Icon(LucideIcons.user, size: 24),
-              label: 'Profile',
+              icon: Icon(LucideIcons.settings, size: 24),
+              label: 'Settings',
             ),
           ],
         ),

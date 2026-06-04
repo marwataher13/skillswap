@@ -37,89 +37,84 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validate() {
-  final name     = _nameController.text.trim();
-  final email    = _emailController.text.trim();
-  final password = _passwordController.text.trim();
-  final confirm  = _confirmController.text.trim();
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirm = _confirmController.text.trim();
 
-  if (kDebugMode) {
-    debugPrint('name: "$name"');
-    debugPrint('email: "$email"');
-    debugPrint('password length: ${password.length}');
-    debugPrint('confirm length: ${confirm.length}');
-    debugPrint('are equal: ${password == confirm}');
-  }
+    if (kDebugMode) {
+      debugPrint('name: "$name"');
+      debugPrint('email: "$email"');
+      debugPrint('password length: ${password.length}');
+      debugPrint('confirm length: ${confirm.length}');
+      debugPrint('are equal: ${password == confirm}');
+    }
 
-  if (name.isEmpty) {
-    if (kDebugMode) {
-      debugPrint('FAILED: name empty');
+    if (name.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('FAILED: name empty');
+      }
+      return 'Please enter your full name';
     }
-    return 'Please enter your full name';
-  }
-  if (email.isEmpty || !email.contains('@')) {
-    if (kDebugMode) {
-      debugPrint('FAILED: email invalid');
+    if (email.isEmpty || !email.contains('@')) {
+      if (kDebugMode) {
+        debugPrint('FAILED: email invalid');
+      }
+      return 'Please enter a valid email address';
     }
-    return 'Please enter a valid email address';
-  }
-  if (password.length < 6) {
-    if (kDebugMode) {
-      debugPrint('FAILED: password too short');
+    if (password.length < 6) {
+      if (kDebugMode) {
+        debugPrint('FAILED: password too short');
+      }
+      return 'Password must be at least 6 characters';
     }
-    return 'Password must be at least 6 characters';
-  }
-  if (password != confirm) {
-    if (kDebugMode) {
-      debugPrint('FAILED: passwords do not match');
+    if (password != confirm) {
+      if (kDebugMode) {
+        debugPrint('FAILED: passwords do not match');
+      }
+      return 'Passwords do not match';
     }
-    return 'Passwords do not match';
+    if (kDebugMode) {
+      debugPrint('VALIDATION PASSED');
+    }
+    return null;
   }
-  if (kDebugMode) {
-    debugPrint('VALIDATION PASSED');
-  }
-  return null;
-}
 
   // ── Submit ───────────────────────────────────
   Future<void> _handleRegister() async {
-  FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus();
 
-  final validationError = _validate();
-  if (validationError != null) {
-    _showSnackBar(validationError, isError: true);
-    return;
-  }
-
-  if (mounted) setState(() => _isLoading = true);
-
-  try {
-    final error = await _authService.register(
-      name:     _nameController.text.trim(),
-      email:    _emailController.text.trim(),
-      password: _passwordController.text.trim(),
-    );
-
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (error != null) {
-      _showSnackBar(error, isError: true);
-    } else {
-      _showSnackBar(
-        'Account created successfully! 🎉',
-        isError: false,
-      );
-      Future.delayed(
-        const Duration(seconds: 1),
-        _navigateToLogin,
-      );
+    final validationError = _validate();
+    if (validationError != null) {
+      _showSnackBar(validationError, isError: true);
+      return;
     }
-  } catch (e) {
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-    _showSnackBar('Something went wrong: $e', isError: true);
+
+    if (mounted) setState(() => _isLoading = true);
+
+    try {
+      final error = await _authService.register(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (error != null) {
+        _showSnackBar(error, isError: true);
+      } else {
+        _showSnackBar('Account created successfully! 🎉', isError: false);
+        Future.delayed(const Duration(seconds: 1), _navigateToLogin);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showSnackBar('Something went wrong: $e', isError: true);
+    }
   }
-}
+
   // ── Helpers ──────────────────────────────────
   void _navigateToLogin() {
     Navigator.pushReplacementNamed(context, '/login');

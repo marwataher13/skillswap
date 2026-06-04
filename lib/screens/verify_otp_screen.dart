@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../services/password_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -29,6 +30,8 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     _otpLength,
     (_) => FocusNode(),
   );
+
+  final _passwordService = PasswordService();
 
   bool _isLoading = false;
   int _timerSeconds = _resendSeconds;
@@ -132,27 +135,55 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     }
   }
 
-  void _onConfirmPressed() {
+  Future<void> _onConfirmPressed() async {
     final code = _otpValue;
     if (code.length < _otpLength) {
       _showSnackBar('Please enter the complete 6-digit code', isError: true);
       return;
     }
+
+    FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+
+    final result = await _passwordService.verifyOtp(email: _email, otp: code);
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess) {
       _showSnackBar('OTP verified successfully! ✅', isError: false);
-      // ── Navigate to NewPasswordScreen ──
-      Navigator.pushNamed(context, '/new-password');
-    });
+      // Pass email forward; token will be empty until backend is updated
+      // (see backend modification note in the implementation guide)
+      Navigator.pushNamed(
+        context,
+        '/new-password',
+        arguments: {
+          'email': _email,
+          'token': '', // ← replace with result.token once backend returns it
+        },
+      );
+    } else {
+      _showSnackBar(result.error ?? 'Verification failed', isError: true);
+      _clearOtp();
+    }
   }
 
-  void _onResendPressed() {
+  Future<void> _onResendPressed() async {
     if (!_canResend) return;
     _clearOtp();
-    _startTimer();
-    _showSnackBar('A new OTP has been sent to your email! ✉️', isError: false);
+
+    final result = await _passwordService.forgotPassword(email: _email);
+    if (!mounted) return;
+
+    if (result.isSuccess) {
+      _startTimer();
+      _showSnackBar(
+        'A new OTP has been sent to your email! ✉️',
+        isError: false,
+      );
+    } else {
+      _showSnackBar(result.error ?? 'Failed to resend OTP', isError: true);
+    }
   }
 
   void _showSnackBar(String message, {required bool isError}) {
@@ -364,7 +395,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.primary, width: 2),
+                  borderSide: const BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
                 ),
                 contentPadding: EdgeInsets.zero,
               ),

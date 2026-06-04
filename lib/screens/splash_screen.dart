@@ -11,39 +11,42 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _controller.forward();
-
-    Timer(const Duration(seconds: 3), () async {
-      if (mounted) {
-        final hasActiveSession = await AuthService.hasToken();
-        if (mounted) {
-          if (hasActiveSession) {
-            Navigator.pushReplacementNamed(context, '/main');
-          } else {
-            Navigator.pushReplacementNamed(context, '/login');
-          }
-        }
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  Timer? _timer;
+ 
+   @override
+   void initState() {
+     super.initState();
+     _controller = AnimationController(
+       duration: const Duration(milliseconds: 1500),
+       vsync: this,
+     );
+     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+     _controller.forward();
+ 
+     _timer = Timer(const Duration(seconds: 3), () async {
+       if (mounted) {
+         final hasActiveSession = await AuthService.hasToken();
+         if (mounted) {
+           if (hasActiveSession) {
+             Navigator.pushReplacementNamed(context, '/main');
+           } else {
+             Navigator.pushReplacementNamed(context, '/login');
+           }
+         }
+       }
+     });
+   }
+ 
+   @override
+   void dispose() {
+     _timer?.cancel();
+     _controller.dispose();
+     super.dispose();
+   }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +61,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                    color: AppColors.surface,
+                  color: AppColors.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(

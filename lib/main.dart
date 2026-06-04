@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:skillswap/providers/profile_provider.dart';
+import 'package:skillswap/screens/profile_screen.dart';
+import 'package:skillswap/screens/profile_view_screen.dart';
+import 'package:skillswap/widgets/change_password_sheet.dart';
 import 'package:skillswap/screens/chat_list_screen.dart';
 import 'package:skillswap/screens/home_screen.dart';
 import 'package:skillswap/screens/main_screen.dart';
+import 'package:skillswap/screens/setting_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
@@ -12,7 +18,12 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
 void main() {
-  runApp(const SkillSwapApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ProfileProvider(),
+      child: const SkillSwapApp(),
+    ),
+  );
 }
 
 class SkillSwapApp extends StatelessWidget {
@@ -33,14 +44,15 @@ class SkillSwapApp extends StatelessWidget {
         '/chat': (context) => const ChatListScreen(),
         '/home': (context) => const HomeScreen(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),
-        '/forgot_password': (context) => const ForgotPasswordScreen(),
         '/reset-password': (context) => const NewPasswordScreen(),
-        '/reset_password': (context) => const NewPasswordScreen(),
         '/new-password': (context) => const NewPasswordScreen(),
-        '/new_password': (context) => const NewPasswordScreen(),
         '/verify-otp': (context) => const VerifyOtpScreen(),
-        '/password-reset-success': (context) => const PasswordResetSuccessScreen(),
-        '/password_reset_success': (context) => const PasswordResetSuccessScreen(),
+        '/password-reset-success': (context) =>
+            const PasswordResetSuccessScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/profile': (context) => const ProfileViewScreen(),
+        '/edit-profile': (context) => const ProfileScreen(),
+        '/change-password': (context) => const ChangePasswordScreen(),
       },
     );
   }

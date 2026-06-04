@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../services/password_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 
@@ -13,8 +14,13 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
+  final _passwordService = PasswordService();
+
   bool _isLoading = false;
   bool _showEmailError = false;
+  String _emailErrorText = 'Email address is required';
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -32,28 +38,58 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _onSendCodePressed() {
+  // ── Validation ─────────────────────────────────────────────────────────────
+
+  bool _validate() {
     final email = _emailController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      setState(() => _showEmailError = true);
-      return;
+    if (email.isEmpty) {
+      setState(() {
+        _emailErrorText = 'Email address is required';
+        _showEmailError = true;
+      });
+      return false;
     }
+    if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,}$').hasMatch(email)) {
+      setState(() {
+        _emailErrorText = 'Please enter a valid email address';
+        _showEmailError = true;
+      });
+      return false;
+    }
+    return true;
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+
+  Future<void> _onSendCodePressed() async {
+    FocusScope.of(context).unfocus();
+    if (!_validate()) return;
 
     setState(() {
       _showEmailError = false;
       _isLoading = true;
     });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showSnackBar(
-        'A 6-digit OTP has been sent to your email! ✉️',
-        isError: false,
+    final result = await _passwordService.forgotPassword(
+      email: _emailController.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (result.isSuccess) {
+      _showSnackBar('OTP sent to your email! ✉️', isError: false);
+      Navigator.pushNamed(
+        context,
+        '/verify-otp',
+        arguments: {'email': _emailController.text.trim()},
       );
-      Navigator.pushReplacementNamed(context, '/verify-otp');
-    });
+    } else {
+      _showSnackBar(result.error ?? 'Something went wrong', isError: true);
+    }
   }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   void _showSnackBar(String message, {required bool isError}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -69,6 +105,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
+  // ── Build ──────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -78,10 +116,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Gradient Header ───────────────────────────────────────────
             _buildHeader(size),
-
-            // ── Form Card ─────────────────────────────────────────────────
             Transform.translate(
               offset: const Offset(0, -28),
               child: Padding(
@@ -116,7 +151,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Top Bar: back arrow ──
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const Icon(
@@ -125,10 +159,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   size: 22,
                 ),
               ),
-
               const Spacer(),
-
-              // ── Title & Subtitle ──
               Text(
                 'Forgot Password',
                 style: GoogleFonts.poppins(
@@ -166,7 +197,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Lock icon circle ──
+          // ── Lock icon ──
           Center(
             child: Container(
               width: 72,
@@ -184,7 +215,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ── Card title ──
           Center(
             child: Text(
               'Enter Registered Email',
@@ -197,7 +227,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           const SizedBox(height: 8),
 
-          // ── Card subtitle ──
           Center(
             child: Text(
               'We will send a 6-digit confirmation OTP to your\nverified email account.',
@@ -212,11 +241,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
           const SizedBox(height: 24),
 
-          // ── Email label ──
+          // ── Email field ──
           const FieldLabel('Email Address'),
           const SizedBox(height: 8),
-
-          // ── Email field ──
           AppTextField(
             hintText: 'Your email address',
             prefixIcon: LucideIcons.mail,
@@ -225,18 +252,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             textInputAction: TextInputAction.done,
           ),
 
-          // ── Inline error ──
           if (_showEmailError) ...[
             const SizedBox(height: 6),
             Text(
-              'Email address is required',
+              _emailErrorText,
               style: GoogleFonts.poppins(fontSize: 12, color: AppColors.error),
             ),
           ],
 
           const SizedBox(height: 28),
 
-          // ── Send Verification Code Button ──
+          // ── Button ──
           _isLoading
               ? const Center(
                   child: Padding(
