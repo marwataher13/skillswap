@@ -10,7 +10,6 @@ import 'package:file_picker/file_picker.dart' as fp;
 import '../widgets/profile_form.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/portfolio_section.dart';
-import '../widgets/change_password_sheet.dart';
 import '../../theme/app_theme.dart';
 
 /// Root screen for Edit Profile & Portfolio.
@@ -58,28 +57,6 @@ class _ProfileScreenContent extends StatelessWidget {
           color: AppColors.textPrimary,
         ),
       ),
-      actions: [
-        // Change password shortcut
-        IconButton(
-          icon: const Icon(
-            LucideIcons.shieldCheck,
-            color: AppColors.primary,
-            size: 22,
-          ),
-          tooltip: 'Change Password',
-          onPressed: () => _openChangePassword(context),
-        ),
-        const SizedBox(width: 4),
-      ],
-    );
-  }
-
-  void _openChangePassword(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const ChangePasswordSheet(),
     );
   }
 }
@@ -119,10 +96,6 @@ class _ProfileBody extends StatelessWidget {
           const ProfileForm(),
           const SizedBox(height: 28),
 
-          // ── Security tile ──
-          _SecurityTile(),
-          const SizedBox(height: 32),
-
           // ── Portfolio ──
           _sectionLabel('Portfolio'),
           const SizedBox(height: 12),
@@ -143,66 +116,6 @@ class _ProfileBody extends StatelessWidget {
         fontWeight: FontWeight.w700,
         color: AppColors.primary,
         letterSpacing: 0.8,
-      ),
-    );
-  }
-}
-
-// ── Security tile ──────────────────────────────────────────────────────────────
-
-class _SecurityTile extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        boxShadow: AppShadows.card,
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        onTap: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => const ChangePasswordSheet(),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  LucideIcons.lock,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  'Change Password',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: AppColors.textSecondary.withValues(alpha: 0.6),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

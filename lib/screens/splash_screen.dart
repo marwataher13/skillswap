@@ -74,7 +74,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: const Icon(
                   LucideIcons.refreshCw,
                   size: 60,
-                  color: AppColors.primaryDark,
+                  color: AppColors.gradientDarkStart,
                 ),
               ),
               const SizedBox(height: 24),
@@ -84,7 +84,7 @@ class _SplashScreenState extends State<SplashScreen>
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  color: AppColors.primaryDark,
+                  color: AppColors.gradientDarkStart,
                 ),
               ),
               const SizedBox(height: 8),
