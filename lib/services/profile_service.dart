@@ -105,10 +105,19 @@ class ProfileService {
       }
       
       // Prepend base URL if relative path
-      if (resolvedUrl != null && resolvedUrl.isNotEmpty && !resolvedUrl.startsWith('http')) {
-        final baseUrlClean = _baseUrl.endsWith('/') ? _baseUrl.substring(0, _baseUrl.length - 1) : _baseUrl;
-        final pathClean = resolvedUrl.startsWith('/') ? resolvedUrl : '/$resolvedUrl';
-        resolvedUrl = '$baseUrlClean$pathClean';
+      if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
+        if (resolvedUrl.startsWith('http')) {
+          if (resolvedUrl.contains('/profile_pictures/') && !resolvedUrl.contains('/storage/profile_pictures/')) {
+            resolvedUrl = resolvedUrl.replaceFirst('/profile_pictures/', '/storage/profile_pictures/');
+          }
+        } else {
+          if (resolvedUrl.startsWith('profile_pictures') && !resolvedUrl.startsWith('storage/')) {
+            resolvedUrl = 'storage/$resolvedUrl';
+          }
+          final baseUrlClean = _baseUrl.endsWith('/') ? _baseUrl.substring(0, _baseUrl.length - 1) : _baseUrl;
+          final pathClean = resolvedUrl.startsWith('/') ? resolvedUrl : '/$resolvedUrl';
+          resolvedUrl = '$baseUrlClean$pathClean';
+        }
       }
       
       return resolvedUrl ?? '';

@@ -42,12 +42,21 @@ class ProfileData {
           avatarVal['file_url'] as String?;
     }
 
-    if (resolvedAvatar != null && resolvedAvatar.isNotEmpty && !resolvedAvatar.startsWith('http')) {
-      final baseUrlClean = AppConfig.baseUrl.endsWith('/')
-          ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
-          : AppConfig.baseUrl;
-      final pathClean = resolvedAvatar.startsWith('/') ? resolvedAvatar : '/$resolvedAvatar';
-      resolvedAvatar = '$baseUrlClean$pathClean';
+    if (resolvedAvatar != null && resolvedAvatar.isNotEmpty) {
+      if (resolvedAvatar.startsWith('http')) {
+        if (resolvedAvatar.contains('/profile_pictures/') && !resolvedAvatar.contains('/storage/profile_pictures/')) {
+          resolvedAvatar = resolvedAvatar.replaceFirst('/profile_pictures/', '/storage/profile_pictures/');
+        }
+      } else {
+        if (resolvedAvatar.startsWith('profile_pictures') && !resolvedAvatar.startsWith('storage/')) {
+          resolvedAvatar = 'storage/$resolvedAvatar';
+        }
+        final baseUrlClean = AppConfig.baseUrl.endsWith('/')
+            ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
+            : AppConfig.baseUrl;
+        final pathClean = resolvedAvatar.startsWith('/') ? resolvedAvatar : '/$resolvedAvatar';
+        resolvedAvatar = '$baseUrlClean$pathClean';
+      }
     }
 
     return ProfileData(
@@ -122,12 +131,24 @@ class PortfolioItem {
         json['url'] as String? ??
         json['path'] as String?;
 
-    if (resolvedUrl != null && resolvedUrl.isNotEmpty && !resolvedUrl.startsWith('http')) {
-      final baseUrlClean = AppConfig.baseUrl.endsWith('/')
-          ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
-          : AppConfig.baseUrl;
-      final pathClean = resolvedUrl.startsWith('/') ? resolvedUrl : '/$resolvedUrl';
-      resolvedUrl = '$baseUrlClean$pathClean';
+    if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
+      if (resolvedUrl.startsWith('http')) {
+        if ((resolvedUrl.contains('/profile_pictures/') || resolvedUrl.contains('/portfolio/')) &&
+            !resolvedUrl.contains('/storage/profile_pictures/') && !resolvedUrl.contains('/storage/portfolio/')) {
+          resolvedUrl = resolvedUrl.replaceFirst('/profile_pictures/', '/storage/profile_pictures/')
+                                   .replaceFirst('/portfolio/', '/storage/portfolio/');
+        }
+      } else {
+        if ((resolvedUrl.startsWith('profile_pictures') || resolvedUrl.startsWith('portfolio')) &&
+            !resolvedUrl.startsWith('storage/')) {
+          resolvedUrl = 'storage/$resolvedUrl';
+        }
+        final baseUrlClean = AppConfig.baseUrl.endsWith('/')
+            ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
+            : AppConfig.baseUrl;
+        final pathClean = resolvedUrl.startsWith('/') ? resolvedUrl : '/$resolvedUrl';
+        resolvedUrl = '$baseUrlClean$pathClean';
+      }
     }
 
     final titleVal = json['title'] ?? json['name'] ?? json['file_name'] ?? json['original_name'];

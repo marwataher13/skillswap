@@ -1,3 +1,5 @@
+import 'package:skillswap/config/app_config.dart';
+
 class ConversationModel {
   final int id;
   final OtherUser otherUser;
@@ -36,11 +38,19 @@ class OtherUser {
   const OtherUser({required this.id, required this.name, this.avatarUrl});
 
   factory OtherUser.fromJson(Map<String, dynamic> json) {
+    final avatarVal = json['avatar_url'] as String? ?? json['profile_photo_url'] as String?;
+    String? resolvedAvatar = avatarVal;
+    if (resolvedAvatar != null && resolvedAvatar.isNotEmpty && !resolvedAvatar.startsWith('http')) {
+      final baseUrlClean = AppConfig.baseUrl.endsWith('/')
+          ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
+          : AppConfig.baseUrl;
+      final pathClean = resolvedAvatar.startsWith('/') ? resolvedAvatar : '/$resolvedAvatar';
+      resolvedAvatar = '$baseUrlClean$pathClean';
+    }
     return OtherUser(
       id: json['id'] as int,
       name: json['name'] as String? ?? 'Unknown',
-      avatarUrl:
-          json['avatar_url'] as String? ?? json['profile_photo_url'] as String?,
+      avatarUrl: resolvedAvatar,
     );
   }
 

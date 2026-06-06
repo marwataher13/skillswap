@@ -1,3 +1,5 @@
+import 'package:skillswap/config/app_config.dart';
+
 class SearchSkillModel {
   final int id;
   final String name;
@@ -16,13 +18,21 @@ class SearchSkillModel {
   });
 
   factory SearchSkillModel.fromJson(Map<String, dynamic> json) {
+    final catVal = json['category'] ?? json['category_name'] ?? json['categoryName'];
+    String resolvedCategory = '';
+    if (catVal is String) {
+      resolvedCategory = catVal;
+    } else if (catVal is Map) {
+      resolvedCategory = catVal['name']?.toString() ?? catVal['title']?.toString() ?? '';
+    }
+
     return SearchSkillModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      description: json['description'] as String? ?? '',
-      level: json['level'] as String? ?? '',
-      type: json['type'] as String? ?? '',
-      category: json['category'] as String? ?? '',
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      level: json['level']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      category: resolvedCategory,
     );
   }
 }
@@ -45,12 +55,30 @@ class SearchResultModel {
   });
 
   factory SearchResultModel.fromJson(Map<String, dynamic> json) {
+    final rawPic = json['profile_picture'] as String? ?? '';
+    String resolvedPic = rawPic;
+    if (resolvedPic.isNotEmpty) {
+      if (resolvedPic.startsWith('http')) {
+        if (resolvedPic.contains('/profile_pictures/') && !resolvedPic.contains('/storage/profile_pictures/')) {
+          resolvedPic = resolvedPic.replaceFirst('/profile_pictures/', '/storage/profile_pictures/');
+        }
+      } else {
+        if (resolvedPic.startsWith('profile_pictures') && !resolvedPic.startsWith('storage/')) {
+          resolvedPic = 'storage/$resolvedPic';
+        }
+        final baseUrlClean = AppConfig.baseUrl.endsWith('/')
+            ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
+            : AppConfig.baseUrl;
+        final pathClean = resolvedPic.startsWith('/') ? resolvedPic : '/$resolvedPic';
+        resolvedPic = '$baseUrlClean$pathClean';
+      }
+    }
     return SearchResultModel(
-      userId: json['user_id'] as int,
-      name: json['name'] as String,
-      profilePicture: json['profile_picture'] as String? ?? '',
-      trustScore: json['trust_score'] as int? ?? 0,
-      averageRating: (json['average_rating'] as num?)?.toDouble() ?? 0.0,
+      userId: int.tryParse(json['user_id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      profilePicture: resolvedPic,
+      trustScore: int.tryParse(json['trust_score']?.toString() ?? '0') ?? 0,
+      averageRating: double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
       skills: (json['skills'] as List<dynamic>? ?? [])
           .map((s) => SearchSkillModel.fromJson(s as Map<String, dynamic>))
           .toList(),

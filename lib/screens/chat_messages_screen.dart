@@ -290,6 +290,7 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
           ? ClipOval(
               child: Image.network(
                 user.avatarUrl!,
+                headers: const {'ngrok-skip-browser-warning': 'true'},
                 width: 38,
                 height: 38,
                 fit: BoxFit.cover,

@@ -175,6 +175,7 @@ class ChatCard extends StatelessWidget {
               ? ClipOval(
                   child: Image.network(
                     user.avatarUrl!,
+                    headers: const {'ngrok-skip-browser-warning': 'true'},
                     width: 52,
                     height: 52,
                     fit: BoxFit.cover,

@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'package:skillswap/providers/profile_provider.dart';
 import 'package:skillswap/screens/profile_screen.dart';
 import 'package:skillswap/screens/profile_view_screen.dart';
+import 'package:skillswap/screens/skill_details_screen.dart';
 import 'package:skillswap/widgets/change_password_sheet.dart';
 import 'package:skillswap/screens/chat_list_screen.dart';
 import 'package:skillswap/screens/home_screen.dart';
 import 'package:skillswap/screens/main_screen.dart';
 import 'package:skillswap/screens/setting_screen.dart';
+import 'package:skillswap/screens/categories_dashboard_screen.dart';
+import 'package:skillswap/screens/advanced_search_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
@@ -17,7 +22,13 @@ import 'screens/password_reset_success_screen.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => ProfileProvider(),
@@ -53,6 +64,9 @@ class SkillSwapApp extends StatelessWidget {
         '/profile': (context) => const ProfileViewScreen(),
         '/edit-profile': (context) => const ProfileScreen(),
         '/change-password': (context) => const ChangePasswordScreen(),
+        '/skill-details': (context) => const SkillDetailsScreen(),
+        '/categories': (context) => const CategoriesDashboardScreen(),
+        '/search': (context) => const AdvancedSearchScreen(),
       },
     );
   }
