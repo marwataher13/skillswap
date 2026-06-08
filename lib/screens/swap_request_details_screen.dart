@@ -34,15 +34,19 @@ class _SwapRequestDetailsScreenState extends State<SwapRequestDetailsScreen> {
     });
     try {
       final req = await _service.fetchById(widget.requestId);
-      if (mounted) setState(() {
-        _request = req;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _request = req;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() {
-        _error = e.toString().replaceFirst('Exception: ', '');
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _isLoading = false;
+        });
+      }
     }
   }
  

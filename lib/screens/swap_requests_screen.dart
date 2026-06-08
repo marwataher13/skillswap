@@ -35,8 +35,6 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
     super.dispose();
   }
 
-  Future<void> _refresh() => context.read<SwapRequestProvider>().loadAll();
-
   void _openDetails(int id) {
     Navigator.push(
       context,
