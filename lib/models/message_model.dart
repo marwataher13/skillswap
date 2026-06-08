@@ -15,10 +15,10 @@ class MessageModel {
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
     return MessageModel(
-      id: json['id'] as int,
-      conversationId: json['conversation_id'] as int? ?? 0,
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      conversationId: int.tryParse(json['conversation_id']?.toString() ?? '') ?? 0,
       body: json['body'] as String? ?? '',
-      isFromMe: json['is_from_me'] as bool? ?? false,
+      isFromMe: json['is_from_me'] == true || json['is_from_me'] == 1 || json['is_from_me']?.toString() == 'true',
       sentAt:
           DateTime.tryParse(
             json['sent_at'] as String? ?? json['created_at'] as String? ?? '',

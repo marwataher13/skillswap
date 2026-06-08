@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:skillswap/providers/profile_provider.dart';
+import 'package:skillswap/providers/swap_request_provider.dart';
 import 'package:skillswap/screens/profile_screen.dart';
 import 'package:skillswap/screens/profile_view_screen.dart';
 import 'package:skillswap/screens/skill_details_screen.dart';
@@ -30,8 +31,11 @@ Future<void> main() async {
   );
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ProfileProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => SwapRequestProvider()),
+      ],
       child: const SkillSwapApp(),
     ),
   );

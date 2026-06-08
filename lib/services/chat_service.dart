@@ -23,49 +23,70 @@ class ChatService {
 
   // ─── GET /conversations ───────────────────────────────────────────────────
   Future<List<ConversationModel>> fetchConversations() async {
-    debugPrint('ChatService: Fetching conversations...');
+    final url = '$_base/api/conversations';
+    debugPrint('ChatService URL: GET $url');
     final headers = await _authHeaders();
-    final response = await http
-        .get(Uri.parse('$_base/api/conversations'), headers: headers)
-        .timeout(const Duration(seconds: 15));
+    
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: headers)
+          .timeout(const Duration(seconds: 15));
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to load conversations (${response.statusCode})');
+      debugPrint('ChatService Response Code: ${response.statusCode}');
+      debugPrint('ChatService Response Body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to load conversations. URL: $url, Code: ${response.statusCode}, Body: ${response.body}',
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+      final List<dynamic> raw = decoded is Map
+          ? (decoded['conversations'] ?? decoded['data'] ?? [])
+          : (decoded is List ? decoded : []);
+
+      return raw
+          .map((e) => ConversationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('ChatService GET $url error: $e');
+      rethrow;
     }
-
-    final decoded = jsonDecode(response.body);
-    final List<dynamic> raw = decoded is Map
-        ? (decoded['conversations'] ?? decoded['data'] ?? [])
-        : (decoded is List ? decoded : []);
-
-    return raw
-        .map((e) => ConversationModel.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 
   // ─── GET /conversations/{id}/messages ─────────────────────────────────────
   Future<List<MessageModel>> fetchMessages(int conversationId) async {
-    debugPrint('ChatService: Fetching messages for conv $conversationId...');
+    final url = '$_base/api/conversations/$conversationId/messages';
+    debugPrint('ChatService URL: GET $url');
     final headers = await _authHeaders();
-    final response = await http
-        .get(
-          Uri.parse('$_base/api/conversations/$conversationId/messages'),
-          headers: headers,
-        )
-        .timeout(const Duration(seconds: 15));
+    
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: headers)
+          .timeout(const Duration(seconds: 15));
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to load messages (${response.statusCode})');
+      debugPrint('ChatService Response Code: ${response.statusCode}');
+      debugPrint('ChatService Response Body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to load messages. URL: $url, Code: ${response.statusCode}, Body: ${response.body}',
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+      final List<dynamic> raw = decoded is Map
+          ? (decoded['messages'] ?? decoded['data'] ?? [])
+          : (decoded is List ? decoded : []);
+
+      return raw
+          .map((e) => MessageModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('ChatService GET $url error: $e');
+      rethrow;
     }
-
-    final decoded = jsonDecode(response.body);
-    final List<dynamic> raw = decoded is Map
-        ? (decoded['messages'] ?? decoded['data'] ?? [])
-        : (decoded is List ? decoded : []);
-
-    return raw
-        .map((e) => MessageModel.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 
   // ─── POST /conversations/{id}/messages ────────────────────────────────────
@@ -73,26 +94,40 @@ class ChatService {
     required int conversationId,
     required String body,
   }) async {
-    debugPrint('ChatService: Sending message to conv $conversationId...');
+    final url = '$_base/api/conversations/$conversationId/messages';
+    debugPrint('ChatService URL: POST $url');
     final headers = await _authHeaders();
-    final response = await http
-        .post(
-          Uri.parse('$_base/api/conversations/$conversationId/messages'),
-          headers: headers,
-          body: jsonEncode({'body': body}),
-        )
-        .timeout(const Duration(seconds: 15));
+    final reqBody = jsonEncode({'body': body});
+    debugPrint('ChatService Request Body: $reqBody');
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to send message (${response.statusCode})');
+    try {
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: headers,
+            body: reqBody,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      debugPrint('ChatService Response Code: ${response.statusCode}');
+      debugPrint('ChatService Response Body: ${response.body}');
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+          'Failed to send message. URL: $url, Code: ${response.statusCode}, Body: ${response.body}',
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+      final msgJson = decoded is Map
+          ? (decoded['message'] ?? decoded['data'] ?? decoded)
+          : decoded;
+
+      return MessageModel.fromJson(msgJson as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('ChatService POST $url error: $e');
+      rethrow;
     }
-
-    final decoded = jsonDecode(response.body);
-    final msgJson = decoded is Map
-        ? (decoded['message'] ?? decoded['data'] ?? decoded)
-        : decoded;
-
-    return MessageModel.fromJson(msgJson as Map<String, dynamic>);
   }
 
   // ─── DELETE /conversations/{convId}/messages/{msgId} ─────────────────────
@@ -100,60 +135,91 @@ class ChatService {
     required int conversationId,
     required int messageId,
   }) async {
-    debugPrint('ChatService: Deleting message $messageId...');
+    final url = '$_base/api/conversations/$conversationId/messages/$messageId';
+    debugPrint('ChatService URL: DELETE $url');
     final headers = await _authHeaders();
-    final response = await http
-        .delete(
-          Uri.parse(
-            '$_base/api/conversations/$conversationId/messages/$messageId',
-          ),
-          headers: headers,
-        )
-        .timeout(const Duration(seconds: 15));
 
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Failed to delete message (${response.statusCode})');
+    try {
+      final response = await http
+          .delete(Uri.parse(url), headers: headers)
+          .timeout(const Duration(seconds: 15));
+
+      debugPrint('ChatService Response Code: ${response.statusCode}');
+      debugPrint('ChatService Response Body: ${response.body}');
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception(
+          'Failed to delete message. URL: $url, Code: ${response.statusCode}, Body: ${response.body}',
+        );
+      }
+    } catch (e) {
+      debugPrint('ChatService DELETE $url error: $e');
+      rethrow;
     }
   }
 
   // ─── POST /conversations/get-or-create ────────────────────────────────────
   Future<ConversationModel> getOrCreateConversation(int otherUserId) async {
-    debugPrint(
-      'ChatService: Get/create conversation with user $otherUserId...',
-    );
+    final url = '$_base/api/conversations/get-or-create';
+    debugPrint('ChatService URL: POST $url');
     final headers = await _authHeaders();
-    final response = await http
-        .post(
-          Uri.parse('$_base/api/conversations/get-or-create'),
-          headers: headers,
-          body: jsonEncode({'other_user_id': otherUserId}),
-        )
-        .timeout(const Duration(seconds: 15));
+    final reqBody = jsonEncode({'other_user_id': otherUserId});
+    debugPrint('ChatService Request Body: $reqBody');
 
-    if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception(
-        'Failed to get/create conversation (${response.statusCode})',
-      );
+    try {
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: headers,
+            body: reqBody,
+          )
+          .timeout(const Duration(seconds: 15));
+
+      debugPrint('ChatService Response Code: ${response.statusCode}');
+      debugPrint('ChatService Response Body: ${response.body}');
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(
+          'Failed to get/create conversation. URL: $url, Code: ${response.statusCode}, Body: ${response.body}',
+        );
+      }
+
+      final decoded = jsonDecode(response.body);
+      final convJson = decoded is Map
+          ? (decoded['conversation'] ?? decoded['data'] ?? decoded)
+          : decoded;
+
+      return ConversationModel.fromJson(convJson as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('ChatService POST $url error: $e');
+      rethrow;
     }
-
-    final decoded = jsonDecode(response.body);
-    final convJson = decoded is Map
-        ? (decoded['conversation'] ?? decoded['data'] ?? decoded)
-        : decoded;
-
-    return ConversationModel.fromJson(convJson as Map<String, dynamic>);
   }
 
   // ─── GET /messages/unread-count ───────────────────────────────────────────
   Future<int> fetchUnreadCount() async {
+    final url = '$_base/api/messages/unread-count';
+    debugPrint('ChatService URL: GET $url');
     final headers = await _authHeaders();
-    final response = await http
-        .get(Uri.parse('$_base/api/messages/unread-count'), headers: headers)
-        .timeout(const Duration(seconds: 15));
 
-    if (response.statusCode != 200) return 0;
+    try {
+      final response = await http
+          .get(Uri.parse(url), headers: headers)
+          .timeout(const Duration(seconds: 15));
 
-    final decoded = jsonDecode(response.body);
-    return (decoded['unread_count'] ?? decoded['count'] ?? 0) as int;
+      debugPrint('ChatService Response Code: ${response.statusCode}');
+      debugPrint('ChatService Response Body: ${response.body}');
+
+      if (response.statusCode != 200) return 0;
+
+      final decoded = jsonDecode(response.body);
+      final count = decoded is Map
+          ? (decoded['unread_count'] ?? decoded['count'] ?? 0)
+          : 0;
+      return int.tryParse(count.toString()) ?? 0;
+    } catch (e) {
+      debugPrint('ChatService GET $url error: $e');
+      return 0;
+    }
   }
 }

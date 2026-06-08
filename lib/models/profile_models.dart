@@ -4,12 +4,14 @@ import 'package:skillswap/config/app_config.dart';
 /// Immutable data class representing the user's profile.
 @immutable
 class ProfileData {
+  final int? id;
   final String name;
   final String bio;
   final String phone;
   final String? avatarUrl;
 
   const ProfileData({
+    this.id,
     required this.name,
     required this.bio,
     required this.phone,
@@ -60,6 +62,7 @@ class ProfileData {
     }
 
     return ProfileData(
+      id: targetJson['id'] as int?,
       name: targetJson['name'] as String? ?? '',
       bio: targetJson['bio'] as String? ?? '',
       phone: targetJson['phone'] as String? ?? '',
@@ -75,6 +78,7 @@ class ProfileData {
       cleanUrl = cleanUrl.split('&t=').first;
     }
     return {
+      'id': id,
       'name': name,
       'bio': bio,
       'phone': phone,
@@ -84,6 +88,7 @@ class ProfileData {
   }
 
   ProfileData copyWith({
+    int? id,
     String? name,
     String? bio,
     String? phone,
@@ -91,6 +96,7 @@ class ProfileData {
     bool clearAvatar = false,
   }) {
     return ProfileData(
+      id: id ?? this.id,
       name: name ?? this.name,
       bio: bio ?? this.bio,
       phone: phone ?? this.phone,

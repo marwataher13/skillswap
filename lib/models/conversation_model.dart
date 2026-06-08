@@ -17,12 +17,14 @@ class ConversationModel {
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
     return ConversationModel(
-      id: json['id'] as int,
-      otherUser: OtherUser.fromJson(json['other_user'] as Map<String, dynamic>),
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      otherUser: OtherUser.fromJson(
+        (json['other_user'] ?? <String, dynamic>{}) as Map<String, dynamic>,
+      ),
       lastMessage: json['last_message'] != null
           ? LastMessage.fromJson(json['last_message'] as Map<String, dynamic>)
           : null,
-      unreadCount: json['unread_count'] as int? ?? 0,
+      unreadCount: int.tryParse(json['unread_count']?.toString() ?? '') ?? 0,
       updatedAt:
           DateTime.tryParse(json['updated_at'] as String? ?? '') ??
           DateTime.now(),
@@ -48,7 +50,7 @@ class OtherUser {
       resolvedAvatar = '$baseUrlClean$pathClean';
     }
     return OtherUser(
-      id: json['id'] as int,
+      id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
       name: json['name'] as String? ?? 'Unknown',
       avatarUrl: resolvedAvatar,
     );
@@ -78,7 +80,7 @@ class LastMessage {
   factory LastMessage.fromJson(Map<String, dynamic> json) {
     return LastMessage(
       body: json['body'] as String? ?? '',
-      isFromMe: json['is_from_me'] as bool? ?? false,
+      isFromMe: json['is_from_me'] == true || json['is_from_me'] == 1 || json['is_from_me']?.toString() == 'true',
       sentAt:
           DateTime.tryParse(json['sent_at'] as String? ?? '') ?? DateTime.now(),
     );
