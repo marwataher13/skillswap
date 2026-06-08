@@ -5,6 +5,8 @@ import 'firebase_options.dart';
 import 'package:skillswap/providers/profile_provider.dart';
 import 'package:skillswap/providers/review_provider.dart';
 import 'package:skillswap/providers/notification_provider.dart';
+import 'package:skillswap/providers/chat_provider.dart';
+import 'package:skillswap/providers/swap_request_provider.dart';
 import 'package:skillswap/screens/profile_screen.dart';
 import 'package:skillswap/screens/profile_view_screen.dart';
 import 'package:skillswap/screens/skill_details_screen.dart';
@@ -25,12 +27,11 @@ import 'screens/password_reset_success_screen.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
+//test
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
     MultiProvider(
@@ -38,6 +39,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => SwapRequestProvider()),
       ],
       child: const SkillSwapApp(),
     ),

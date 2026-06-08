@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import '../theme/app_theme.dart';
 import 'auth_widgets.dart';
 import 'package:skillswap/services/profile_service.dart';

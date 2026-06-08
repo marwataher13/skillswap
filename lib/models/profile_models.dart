@@ -4,14 +4,12 @@ import 'package:skillswap/config/app_config.dart';
 /// Immutable data class representing the user's profile.
 @immutable
 class ProfileData {
-  final int id;
   final String name;
   final String bio;
   final String phone;
   final String? avatarUrl;
 
   const ProfileData({
-    this.id = 0,
     required this.name,
     required this.bio,
     required this.phone,
@@ -62,7 +60,6 @@ class ProfileData {
     }
 
     return ProfileData(
-      id: int.tryParse(targetJson['id']?.toString() ?? '0') ?? 0,
       name: targetJson['name'] as String? ?? '',
       bio: targetJson['bio'] as String? ?? '',
       phone: targetJson['phone'] as String? ?? '',
