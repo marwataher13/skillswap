@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -17,11 +18,6 @@ class SettingsScreen extends StatelessWidget {
   ];
 
   static const _privacyItems = [
-    _SettingsItem(
-      icon: LucideIcons.shieldOff,
-      label: 'Blocked Users',
-      route: '/blocked-users',
-    ),
     _SettingsItem(
       icon: LucideIcons.lock,
       label: 'Change Password',
@@ -120,11 +116,7 @@ class SettingsScreen extends StatelessWidget {
                 icon: item.icon,
                 label: item.label,
                 onTap: () {
-                  if (item.route == '/blocked-users') {
-                    _showComingSoonSnackBar(context, item.label);
-                  } else {
-                    Navigator.pushNamed(context, item.route);
-                  }
+                  Navigator.pushNamed(context, item.route);
                 },
               ),
               if (!isLast)
@@ -280,9 +272,11 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          TextButton(
-            onPressed: () {
+           TextButton(
+            onPressed: () async {
               Navigator.pop(ctx);
+              await AuthService.clearToken();
+              if (!context.mounted) return;
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/login',

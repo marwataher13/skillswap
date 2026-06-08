@@ -122,23 +122,29 @@ class _SkillDetailsScreenState extends State<SkillDetailsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                        ),
-                        child: Text(
-                          category.toUpperCase(),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.8,
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                          ),
+                          child: Text(
+                            category.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           if (level.isNotEmpty) ...[
                             Container(
@@ -229,92 +235,104 @@ class _SkillDetailsScreenState extends State<SkillDetailsScreen> {
                 style: AppTextStyles.titleMedium,
               ),
               const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                  boxShadow: AppShadows.card,
-                ),
-                child: Row(
-                  children: [
-                    // Owner Avatar
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [AppColors.gradientStart, AppColors.gradientEnd],
-                        ),
-                      ),
-                      child: owner.profilePicture.isNotEmpty
-                          ? ClipOval(
-                              child: Image.network(
-                                owner.profilePicture,
-                                headers: const {'ngrok-skip-browser-warning': 'true'},
-                                width: 58,
-                                height: 58,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _initialsWidget(owner.name),
-                              ),
-                            )
-                          : _initialsWidget(owner.name),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Owner Details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            owner.name,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
+              InkWell(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/profile',
+                    arguments: {
+                      'userId': owner.userId,
+                    },
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                    boxShadow: AppShadows.card,
+                  ),
+                  child: Row(
+                    children: [
+                      // Owner Avatar
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [AppColors.gradientStart, AppColors.gradientEnd],
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(
-                                LucideIcons.star,
-                                size: 14,
-                                color: AppColors.caramelRoast,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                owner.averageRating.toStringAsFixed(1),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                        ),
+                        child: owner.profilePicture.isNotEmpty
+                            ? ClipOval(
+                                child: Image.network(
+                                  owner.profilePicture,
+                                  headers: const {'ngrok-skip-browser-warning': 'true'},
+                                  width: 58,
+                                  height: 58,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _initialsWidget(owner.name),
                                 ),
+                              )
+                            : _initialsWidget(owner.name),
+                      ),
+                      const SizedBox(width: 16),
+
+                      // Owner Details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              owner.name,
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
                               ),
-                              const SizedBox(width: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryLight,
-                                  borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(
+                                  LucideIcons.star,
+                                  size: 14,
+                                  color: AppColors.caramelRoast,
                                 ),
-                                child: Text(
-                                  'Score: ${owner.trustScore}',
+                                const SizedBox(width: 4),
+                                Text(
+                                  owner.averageRating.toStringAsFixed(1),
                                   style: GoogleFonts.poppins(
-                                    fontSize: 11,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.mochaBean,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                                const SizedBox(width: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryLight,
+                                    borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                                  ),
+                                  child: Text(
+                                    'Score: ${owner.trustScore}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.mochaBean,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 32),

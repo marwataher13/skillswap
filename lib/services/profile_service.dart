@@ -27,6 +27,23 @@ class ProfileService {
     }
   }
 
+  // 1b. GET /api/users/{id}
+  Future<Map<String, dynamic>> fetchUserProfile(int userId) async {
+    final url = Uri.parse('$_baseUrl/api/users/$userId');
+    final headers = await AuthService.getAuthHeaders();
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      debugPrint('=== FETCH USER PROFILE RESPONSE ===');
+      debugPrint('Response: ${response.body}');
+      final data = jsonDecode(response.body);
+      final userJson = data is Map && data.containsKey('user') ? data['user'] : data;
+      return Map<String, dynamic>.from(userJson as Map);
+    } else {
+      throw Exception('Failed to fetch user profile: ${response.statusCode} ${response.body}');
+    }
+  }
+
   // 2. PUT /api/profile/update
   Future<ProfileData> updateProfile(ProfileData profile) async {
     final url = Uri.parse('$_baseUrl/api/profile/update');

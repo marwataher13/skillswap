@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:skillswap/models/category_model.dart';
 import 'package:skillswap/models/search_result_model.dart';
 import 'package:skillswap/providers/profile_provider.dart';
+import 'package:skillswap/providers/notification_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/home_search_bar.dart';
 import '../widgets/category_list.dart';
@@ -635,7 +636,49 @@ class _HomeScreenState extends State<HomeScreen> {
               color: AppColors.primaryDark,
             ),
           ),
+          _buildNotificationBell(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationBell(BuildContext context) {
+    final unreadCount = context.watch<NotificationProvider>().unreadCount;
+
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/notifications'),
+      behavior: HitTestBehavior.opaque,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
           const Icon(LucideIcons.bell, color: AppColors.textPrimary),
+          if (unreadCount > 0)
+            Positioned(
+              right: -2,
+              top: -2,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: AppColors.error,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 14,
+                  minHeight: 14,
+                ),
+                child: Center(
+                  child: Text(
+                    unreadCount > 9 ? '9+' : '$unreadCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

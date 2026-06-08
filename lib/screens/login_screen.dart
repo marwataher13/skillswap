@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:provider/provider.dart';
+import '../providers/profile_provider.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
@@ -69,6 +71,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result.isSuccess) {
         await AuthService.saveToken(result.token ?? '');
         if (!mounted) return;
+        
+        // Force refresh ProfileProvider cache with the new token
+        await context.read<ProfileProvider>().loadData();
+        if (!mounted) return;
+
         _showSnackBar('Logged in successfully! Welcome back.', isError: false);
         Navigator.pushReplacementNamed(context, '/main');
       } else {

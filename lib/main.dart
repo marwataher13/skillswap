@@ -3,9 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'package:skillswap/providers/profile_provider.dart';
+import 'package:skillswap/providers/review_provider.dart';
+import 'package:skillswap/providers/notification_provider.dart';
 import 'package:skillswap/screens/profile_screen.dart';
 import 'package:skillswap/screens/profile_view_screen.dart';
 import 'package:skillswap/screens/skill_details_screen.dart';
+import 'package:skillswap/screens/notifications_screen.dart';
 import 'package:skillswap/widgets/change_password_sheet.dart';
 import 'package:skillswap/screens/chat_list_screen.dart';
 import 'package:skillswap/screens/home_screen.dart';
@@ -30,8 +33,12 @@ Future<void> main() async {
   );
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ProfileProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => ReviewProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+      ],
       child: const SkillSwapApp(),
     ),
   );
@@ -67,6 +74,7 @@ class SkillSwapApp extends StatelessWidget {
         '/skill-details': (context) => const SkillDetailsScreen(),
         '/categories': (context) => const CategoriesDashboardScreen(),
         '/search': (context) => const AdvancedSearchScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
       },
     );
   }

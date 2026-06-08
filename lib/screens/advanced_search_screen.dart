@@ -583,87 +583,108 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                 // Top Info
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppColors.primaryLight,
-                      foregroundImage: result.profilePicture.isNotEmpty
-                          ? NetworkImage(result.profilePicture)
-                          : null,
-                      onForegroundImageError: result.profilePicture.isNotEmpty
-                          ? (exception, stackTrace) {
-                              debugPrint('Failed to load profile image: $exception');
-                            }
-                          : null,
-                      child: Text(
-                        result.name.isNotEmpty ? result.name[0].toUpperCase() : '?',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            '/profile',
+                            arguments: {
+                              'userId': result.userId,
+                            },
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
                             children: [
-                              Expanded(
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: AppColors.primaryLight,
+                                foregroundImage: result.profilePicture.isNotEmpty
+                                    ? NetworkImage(result.profilePicture)
+                                    : null,
+                                onForegroundImageError: result.profilePicture.isNotEmpty
+                                    ? (exception, stackTrace) {
+                                        debugPrint('Failed to load profile image: $exception');
+                                      }
+                                    : null,
                                 child: Text(
-                                  result.name,
+                                  result.name.isNotEmpty ? result.name[0].toUpperCase() : '?',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                     color: AppColors.textPrimary,
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (isMe)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryLight,
-                                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                                  ),
-                                  child: Text(
-                                    'You',
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      fontSize: 10,
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.bold,
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            result.name,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (isMe)
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primaryLight,
+                                              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                                            ),
+                                            child: Text(
+                                              'You',
+                                              style: AppTextStyles.labelSmall.copyWith(
+                                                fontSize: 10,
+                                                color: AppColors.textPrimary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Icon(LucideIcons.star, color: Colors.amber, size: 12),
-                              const SizedBox(width: 4),
-                              Text(
-                                result.averageRating.toStringAsFixed(1),
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.textPrimary,
-                                  fontWeight: FontWeight.bold,
+                                    Row(
+                                      children: [
+                                        const Icon(LucideIcons.star, color: Colors.amber, size: 12),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          result.averageRating.toStringAsFixed(1),
+                                          style: AppTextStyles.labelSmall.copyWith(
+                                            color: AppColors.textPrimary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(width: AppSpacing.md),
+                                        const Icon(LucideIcons.shieldCheck, color: AppColors.success, size: 12),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Trust: ${result.trustScore}',
+                                          style: AppTextStyles.labelSmall.copyWith(
+                                            color: AppColors.success,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: AppSpacing.md),
-                              const Icon(LucideIcons.shieldCheck, color: AppColors.success, size: 12),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Trust: ${result.trustScore}',
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.success,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                     if (!isMe)

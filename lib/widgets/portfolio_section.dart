@@ -10,18 +10,19 @@ import '../theme/app_theme.dart';
 /// Each tile shows file type icon, title, and a delete button.
 class PortfolioSection extends StatelessWidget {
   final bool isEditable;
-  const PortfolioSection({super.key, this.isEditable = true});
+  final List<PortfolioItem>? items;
+  const PortfolioSection({super.key, this.isEditable = true, this.items});
 
   @override
   Widget build(BuildContext context) {
-    final items = context.watch<ProfileProvider>().portfolioItems;
+    final list = items ?? context.watch<ProfileProvider>().portfolioItems;
 
-    if (items.isEmpty) return _EmptyPortfolio();
+    if (list.isEmpty) return _EmptyPortfolio(isEditable: isEditable);
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
+      itemCount: list.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 12,
@@ -29,7 +30,7 @@ class PortfolioSection extends StatelessWidget {
         childAspectRatio: 1.0,
       ),
       itemBuilder: (context, index) =>
-          _PortfolioTile(item: items[index], isEditable: isEditable),
+          _PortfolioTile(item: list[index], isEditable: isEditable),
     );
   }
 }
@@ -580,6 +581,9 @@ class _FileViewerDialog extends StatelessWidget {
 // ── Empty state ────────────────────────────────────────────────────────────────
 
 class _EmptyPortfolio extends StatelessWidget {
+  final bool isEditable;
+  const _EmptyPortfolio({this.isEditable = true});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -604,7 +608,7 @@ class _EmptyPortfolio extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'No files yet',
+            isEditable ? 'No files yet' : 'No portfolio files',
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -613,7 +617,7 @@ class _EmptyPortfolio extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Tap "Add File" to upload your work',
+            isEditable ? 'Tap "Add File" to upload your work' : 'This user has not uploaded any files yet.',
             style: GoogleFonts.poppins(
               fontSize: 12,
               color: AppColors.textSecondary,

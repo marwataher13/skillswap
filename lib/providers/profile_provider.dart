@@ -141,8 +141,7 @@ class ProfileProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('ProfileProvider.deletePortfolioItem error: $e');
-      _portfolioItems = _portfolioItems.where((e) => e.id != id).toList();
-      notifyListeners();
+      rethrow;
     }
   }
 }

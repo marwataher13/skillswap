@@ -4,12 +4,14 @@ import 'package:skillswap/config/app_config.dart';
 /// Immutable data class representing the user's profile.
 @immutable
 class ProfileData {
+  final int id;
   final String name;
   final String bio;
   final String phone;
   final String? avatarUrl;
 
   const ProfileData({
+    this.id = 0,
     required this.name,
     required this.bio,
     required this.phone,
@@ -60,6 +62,7 @@ class ProfileData {
     }
 
     return ProfileData(
+      id: int.tryParse(targetJson['id']?.toString() ?? '0') ?? 0,
       name: targetJson['name'] as String? ?? '',
       bio: targetJson['bio'] as String? ?? '',
       phone: targetJson['phone'] as String? ?? '',
@@ -75,6 +78,7 @@ class ProfileData {
       cleanUrl = cleanUrl.split('&t=').first;
     }
     return {
+      'id': id,
       'name': name,
       'bio': bio,
       'phone': phone,
@@ -84,6 +88,7 @@ class ProfileData {
   }
 
   ProfileData copyWith({
+    int? id,
     String? name,
     String? bio,
     String? phone,
@@ -91,6 +96,7 @@ class ProfileData {
     bool clearAvatar = false,
   }) {
     return ProfileData(
+      id: id ?? this.id,
       name: name ?? this.name,
       bio: bio ?? this.bio,
       phone: phone ?? this.phone,
@@ -117,7 +123,19 @@ class PortfolioItem {
   });
 
   factory PortfolioItem.fromJson(Map<String, dynamic> json) {
-    final fileVal = json['file'];
+    // Auto-unwrap nested structure if present
+    Map<String, dynamic> targetJson = json;
+    if (json.containsKey('data') && json['data'] is Map) {
+      targetJson = Map<String, dynamic>.from(json['data'] as Map);
+    } else if (json.containsKey('portfolio') && json['portfolio'] is Map) {
+      targetJson = Map<String, dynamic>.from(json['portfolio'] as Map);
+    } else if (json.containsKey('portfolio_file') && json['portfolio_file'] is Map) {
+      targetJson = Map<String, dynamic>.from(json['portfolio_file'] as Map);
+    } else if (json.containsKey('file') && json['file'] is Map && (json['file'] as Map).containsKey('id')) {
+      targetJson = Map<String, dynamic>.from(json['file'] as Map);
+    }
+
+    final fileVal = targetJson['file'];
     String? resolvedUrl;
     if (fileVal is String) {
       resolvedUrl = fileVal;
@@ -127,9 +145,9 @@ class PortfolioItem {
           fileVal['file_url'] as String?;
     }
 
-    resolvedUrl ??= json['file_url'] as String? ??
-        json['url'] as String? ??
-        json['path'] as String?;
+    resolvedUrl ??= targetJson['file_url'] as String? ??
+        targetJson['url'] as String? ??
+        targetJson['path'] as String?;
 
     if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
       if (resolvedUrl.startsWith('http')) {
@@ -151,9 +169,9 @@ class PortfolioItem {
       }
     }
 
-    final titleVal = json['title'] ?? json['name'] ?? json['file_name'] ?? json['original_name'];
+    final titleVal = targetJson['title'] ?? targetJson['name'] ?? targetJson['file_name'] ?? targetJson['original_name'];
     final titleString = titleVal?.toString().toLowerCase() ?? '';
-    final typeString = (json['type'] as String? ?? '').toLowerCase();
+    final typeString = (targetJson['type'] as String? ?? '').toLowerCase();
     final urlString = (resolvedUrl ?? '').toLowerCase();
 
     FileType resolvedType = FileType.image;
@@ -169,7 +187,7 @@ class PortfolioItem {
     }
 
     return PortfolioItem(
-      id: (json['id'] ?? '').toString(),
+      id: (targetJson['id'] ?? '').toString(),
       title: titleVal?.toString() ?? '',
       type: resolvedType,
       fileUrl: resolvedUrl,
