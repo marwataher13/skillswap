@@ -23,12 +23,11 @@ import 'screens/password_reset_success_screen.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
+//test
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(
     MultiProvider(
