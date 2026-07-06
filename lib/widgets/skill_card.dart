@@ -17,6 +17,7 @@ class SkillCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -28,28 +29,22 @@ class SkillCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(category, style: AppTextStyles.labelSmall),
-
             const SizedBox(height: 4),
-
             Text(name, style: AppTextStyles.titleMedium.copyWith(fontSize: 18)),
-
             const SizedBox(height: 8),
-
             Text(type, style: AppTextStyles.bodyMedium),
-
             const SizedBox(height: 12),
-
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: onViewDetails,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryLight,
+                  backgroundColor: c.primaryLight,
                   minimumSize: const Size(100, 36),
                 ),
-                child: const Text(
+                child: Text(
                   'View Details',
-                  style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 12, color: c.textPrimary),
                 ),
               ),
             ),

@@ -13,12 +13,14 @@ class MessageModel {
     required this.sentAt,
   });
 
-  factory MessageModel.fromJson(Map<String, dynamic> json) {
+  factory MessageModel.fromJson(Map<String, dynamic> json, int currentUserId) {
+    final senderId = int.tryParse(json['sender_id']?.toString() ?? '') ??
+                     int.tryParse(json['sender']?['id']?.toString() ?? '') ?? 0;
     return MessageModel(
       id: int.tryParse(json['id']?.toString() ?? '') ?? 0,
       conversationId: int.tryParse(json['conversation_id']?.toString() ?? '') ?? 0,
       body: json['body'] as String? ?? '',
-      isFromMe: json['is_from_me'] == true || json['is_from_me'] == 1 || json['is_from_me']?.toString() == 'true',
+      isFromMe: senderId == currentUserId,
       sentAt:
           DateTime.tryParse(
             json['sent_at'] as String? ?? json['created_at'] as String? ?? '',

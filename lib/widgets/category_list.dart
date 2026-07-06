@@ -29,6 +29,7 @@ class _CategoryListState extends State<CategoryList> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return SizedBox(
       height: 45,
       child: ListView.builder(
@@ -41,23 +42,17 @@ class _CategoryListState extends State<CategoryList> {
             padding: const EdgeInsets.only(right: 12),
             child: GestureDetector(
               onTap: () {
-                setState(() {
-                  _selectedIndex = index;
-                });
-                if (widget.onCategorySelected != null) {
-                  widget.onCategorySelected!(index);
-                }
+                setState(() => _selectedIndex = index);
+                widget.onCategorySelected?.call(index);
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primaryLight : AppColors.surface,
+                  color: isSelected ? c.primaryLight : c.surface,
                   borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                   border: Border.all(
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.border.withValues(alpha: 0.5),
+                    color: isSelected ? c.primary : c.border.withValues(alpha: 0.5),
                     width: isSelected ? 1.5 : 1,
                   ),
                   boxShadow: isSelected ? AppShadows.subtle : null,
@@ -68,7 +63,7 @@ class _CategoryListState extends State<CategoryList> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                      color: isSelected ? c.textPrimary : c.textSecondary,
                     ),
                   ),
                 ),

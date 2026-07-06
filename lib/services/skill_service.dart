@@ -8,6 +8,7 @@ import 'package:skillswap/models/category_model.dart';
 import 'package:skillswap/models/search_result_model.dart';
 import 'package:skillswap/models/top_user_model.dart';
 import 'package:skillswap/models/paginated_response.dart';
+import 'package:skillswap/models/recommendation_model.dart';
 import '../config/app_config.dart';
 import 'package:skillswap/services/auth_service.dart';
 
@@ -30,7 +31,7 @@ class SkillService {
     final headers = await AuthService.getAuthHeaders();
     final response = await http
         .get(Uri.parse(_skillsEndpoint), headers: headers)
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     debugPrint('SkillService.fetchSkills response body: ${response.body}');
 
@@ -71,7 +72,7 @@ class SkillService {
             'level': level ?? 'beginner',
           }),
         )
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception('Failed to create skill: ${response.body}');
@@ -109,7 +110,7 @@ class SkillService {
           headers: {..._headers, 'Authorization': 'Bearer $token'},
           body: jsonEncode(bodyMap),
         )
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception('Failed to update skill: ${response.body}');
@@ -133,7 +134,7 @@ class SkillService {
           Uri.parse('$_skillsEndpoint/$skillId'),
           headers: {..._headers, 'Authorization': 'Bearer $token'},
         )
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete skill');
@@ -147,7 +148,7 @@ class SkillService {
           Uri.parse(_skillsEndpoint),
           headers: {..._headers, 'Authorization': 'Bearer $token'},
         )
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200) {
       throw Exception('Failed to fetch skills (${response.statusCode})');
@@ -171,7 +172,7 @@ class SkillService {
     final headers = await AuthService.getAuthHeaders();
     final response = await http
         .get(Uri.parse(_categoriesEndpoint), headers: headers)
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200) {
       _handleErrorResponse(response);
@@ -214,7 +215,7 @@ class SkillService {
     final headers = await AuthService.getAuthHeaders();
     final response = await http
         .get(uri, headers: headers)
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200) {
       _handleErrorResponse(response);
@@ -243,7 +244,7 @@ class SkillService {
     final headers = await AuthService.getAuthHeaders();
     final response = await http
         .get(uri, headers: headers)
-        .timeout(const Duration(seconds: 15));
+        .timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200) {
       _handleErrorResponse(response);
@@ -257,6 +258,44 @@ class SkillService {
 
     final mapDecoded = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
     return PaginatedResponse<TopUserModel>.fromJson(mapDecoded, list);
+  }
+
+  // ─── Fetch User Recommendations (Recommended For You) ──────────
+  Future<List<RecommendationModel>> fetchRecommendations() async {
+    final endpoint = '${AppConfig.baseUrl}/api/recommendations';
+    debugPrint('SkillService: Fetching recommendations from $endpoint...');
+
+    final headers = await AuthService.getAuthHeaders();
+    final response = await http
+        .get(Uri.parse(endpoint), headers: headers)
+        .timeout(const Duration(seconds: 300));
+
+    debugPrint('SkillService.fetchRecommendations status: ${response.statusCode}');
+    debugPrint('SkillService.fetchRecommendations body: ${response.body}');
+
+    if (response.statusCode != 200) {
+      _handleErrorResponse(response);
+    }
+
+    final decoded = jsonDecode(response.body);
+
+    if (decoded is Map) {
+      final msg = decoded['message']?.toString();
+      if (msg != null && (
+          msg.contains('Please add your skills') ||
+          msg.contains('Please add at least one skill')
+      )) {
+        throw Exception(msg);
+      }
+    }
+
+    final List<dynamic> raw = decoded is Map
+        ? (decoded['recommendations'] ?? decoded['data'] ?? [])
+        : (decoded is List ? decoded : []);
+
+    return raw
+        .map((item) => RecommendationModel.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 
   // Helper method to handle API errors and extract user-friendly messages

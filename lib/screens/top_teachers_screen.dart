@@ -5,9 +5,10 @@ import 'package:provider/provider.dart';
 import 'package:skillswap/models/top_user_model.dart';
 import 'package:skillswap/models/search_result_model.dart';
 import 'package:skillswap/services/skill_service.dart';
-import 'package:skillswap/services/chat_service.dart';
 import 'package:skillswap/screens/chat_messages_screen.dart';
 import 'package:skillswap/providers/profile_provider.dart';
+import 'package:skillswap/providers/chat_provider.dart';
+import 'package:skillswap/providers/swap_request_provider.dart';
 import 'package:skillswap/theme/app_theme.dart';
 
 class TopTeachersScreen extends StatefulWidget {
@@ -26,7 +27,6 @@ class TopTeachersScreen extends StatefulWidget {
 
 class _TopTeachersScreenState extends State<TopTeachersScreen> {
   final SkillService _skillService = SkillService();
-  final ChatService _chatService = ChatService();
   final ScrollController _scrollController = ScrollController();
 
   List<TopUserModel> _users = [];
@@ -65,7 +65,6 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
       _isLoading = true;
       _error = null;
     });
-
     try {
       final response = await _skillService.fetchTopUsers(widget.categoryId, page: 1);
       if (mounted) {
@@ -87,10 +86,8 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
   }
 
   Future<void> _loadMore() async {
-    setState(() {
-      _isLoadingMore = true;
-    });
-
+    setState(() => _isLoadingMore = true);
+    final errorColor = context.appColors.error;
     try {
       final nextPage = _currentPage + 1;
       final response = await _skillService.fetchTopUsers(widget.categoryId, page: nextPage);
@@ -104,13 +101,11 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoadingMore = false;
-        });
+        setState(() => _isLoadingMore = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load more teachers: ${e.toString().replaceAll('Exception: ', '')}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
           ),
@@ -120,25 +115,39 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
   }
 
   Future<void> _contactTeacher(TopUserModel teacher) async {
+    final swapRequestProvider = context.read<SwapRequestProvider>();
+    final acceptedRequest = swapRequestProvider.getAcceptedRequestWithUser(teacher.userId);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final errorColor = context.appColors.error;
+
+    if (acceptedRequest == null) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: const Text('Chatting is only allowed once a Swap Request has been accepted.'),
+          backgroundColor: errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isInitiatingChat = true;
       _chattingUserId = teacher.userId;
     });
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final chatProvider = context.read<ChatProvider>();
     final navigator = Navigator.of(context);
 
     try {
-      final conversation = await _chatService.getOrCreateConversation(teacher.userId);
+      final conversation = await chatProvider.getOrCreateAndOpenConversation(teacher.userId, acceptedRequest.id);
       if (!mounted) return;
       setState(() {
         _isInitiatingChat = false;
         _chattingUserId = null;
       });
-
       navigator.push(
-        MaterialPageRoute(
-          builder: (_) => ChatMessagesScreen(conversation: conversation),
-        ),
+        MaterialPageRoute(builder: (_) => ChatMessagesScreen(conversation: conversation)),
       );
     } catch (e) {
       if (!mounted) return;
@@ -148,10 +157,10 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
       });
       scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text('Failed to open chat: $e'),
-          backgroundColor: AppColors.error,
+          content: Text('Failed to open chat: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: errorColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
         ),
       );
     }
@@ -166,7 +175,6 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
       type: 'teach',
       category: widget.categoryName,
     );
-
     final searchResult = SearchResultModel(
       userId: user.userId,
       name: user.name,
@@ -175,53 +183,43 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
       averageRating: user.averageRating,
       skills: [searchSkill],
     );
-
     Navigator.pushNamed(
       context,
       '/skill-details',
-      arguments: {
-        'result': searchResult,
-        'skill': searchSkill,
-      },
+      arguments: {'result': searchResult, 'skill': searchSkill},
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
         title: Text(
           widget.categoryName,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: c.textPrimary),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: c.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadTopUsers,
-          color: AppColors.primaryDark,
-          child: _buildContent(),
+          color: c.primaryDark,
+          child: _buildContent(c),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(AppColorsExtension c) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primary,
-        ),
-      );
+      return Center(child: CircularProgressIndicator(color: c.primary));
     }
 
     if (_error != null) {
@@ -233,21 +231,17 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  LucideIcons.alertTriangle,
-                  color: AppColors.error,
-                  size: 48,
-                ),
+                Icon(LucideIcons.alertTriangle, color: c.error, size: 48),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'Failed to load teachers',
-                  style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary),
+                  style: AppTextStyles.titleMedium.copyWith(color: c.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   _error!,
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodyMedium.copyWith(color: c.textSecondary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -256,7 +250,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                   icon: const Icon(LucideIcons.refreshCw, size: 16),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: c.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     minimumSize: const Size(120, 45),
                   ),
@@ -277,21 +271,17 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  LucideIcons.users,
-                  color: AppColors.textHint,
-                  size: 64,
-                ),
+                Icon(LucideIcons.users, color: c.textHint, size: 64),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'No Teachers Found',
-                  style: AppTextStyles.titleMedium.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.titleMedium.copyWith(color: c.textSecondary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   'Be the first to list a teaching skill in this category!',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textHint),
+                  style: AppTextStyles.bodyMedium.copyWith(color: c.textHint),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -310,11 +300,9 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
       itemBuilder: (context, index) {
         if (index == _users.length) {
           return _isLoadingMore
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  child: Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
-                  ),
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: Center(child: CircularProgressIndicator(color: c.primary)),
                 )
               : const SizedBox.shrink();
         }
@@ -328,12 +316,9 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
         return Container(
           margin: const EdgeInsets.only(bottom: AppSpacing.md),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: c.surface,
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-            border: Border.all(
-              color: AppColors.border.withValues(alpha: 0.3),
-              width: 1,
-            ),
+            border: Border.all(color: c.border.withValues(alpha: 0.3), width: 1),
             boxShadow: AppShadows.subtle,
           ),
           child: Padding(
@@ -341,13 +326,12 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header (Avatar + Name + Trust score)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     CircleAvatar(
                       radius: 26,
-                      backgroundColor: AppColors.primaryLight,
+                      backgroundColor: c.primaryLight,
                       foregroundImage: user.profilePicture.isNotEmpty
                           ? NetworkImage(user.profilePicture)
                           : null,
@@ -361,7 +345,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: c.textPrimary,
                         ),
                       ),
                     ),
@@ -378,7 +362,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                                    color: c.textPrimary,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -388,13 +372,13 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primaryLight,
+                                    color: c.primaryLight,
                                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                                   ),
                                   child: Text(
                                     'You',
                                     style: AppTextStyles.labelSmall.copyWith(
-                                      color: AppColors.textPrimary,
+                                      color: c.textPrimary,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -409,16 +393,16 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                               Text(
                                 user.averageRating.toStringAsFixed(1),
                                 style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: c.textPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.sm),
-                              const Icon(LucideIcons.refreshCw, color: AppColors.textSecondary, size: 12),
+                              Icon(LucideIcons.refreshCw, color: c.textSecondary, size: 12),
                               const SizedBox(width: 4),
                               Text(
                                 '${user.totalSwaps} swaps',
-                                style: AppTextStyles.labelSmall.copyWith(color: AppColors.textSecondary),
+                                style: AppTextStyles.labelSmall.copyWith(color: c.textSecondary),
                               ),
                             ],
                           ),
@@ -428,13 +412,11 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-
-                // Skill Section
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: AppColors.background.withValues(alpha: 0.5),
+                    color: c.background.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                   ),
                   child: Column(
@@ -449,7 +431,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: c.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -458,14 +440,14 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
+                              color: c.primaryLight,
                               borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                             ),
                             child: Text(
                               skillLevel.toUpperCase(),
                               style: AppTextStyles.labelSmall.copyWith(
                                 fontSize: 10,
-                                color: AppColors.textPrimary,
+                                color: c.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -484,35 +466,29 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: AppSpacing.md),
-
-                // Footer (Trust Score + Buttons)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Trust Score Badge
                     Row(
                       children: [
-                        const Icon(LucideIcons.shieldCheck, color: AppColors.success, size: 16),
+                        Icon(LucideIcons.shieldCheck, color: c.success, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          'Trust Score: ${user.trustScore}',
+                          'Trust Score: ${user.trustScore % 1 == 0 ? user.trustScore.toInt().toString() : user.trustScore.toStringAsFixed(2)}',
                           style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.success,
+                            color: c.success,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-
-                    // Actions
                     Row(
                       children: [
                         OutlinedButton(
                           onPressed: () => _viewDetails(user),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: c.border),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                             ),
@@ -521,11 +497,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                           ),
                           child: Text(
                             'Details',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
-                            ),
+                            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: c.textPrimary),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -533,7 +505,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                           ElevatedButton(
                             onPressed: _isInitiatingChat ? null : () => _contactTeacher(user),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
+                              backgroundColor: c.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                               ),
@@ -544,10 +516,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                                 ? const SizedBox(
                                     width: 14,
                                     height: 14,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                   )
                                 : Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -556,11 +525,7 @@ class _TopTeachersScreenState extends State<TopTeachersScreen> {
                                       const SizedBox(width: 4),
                                       Text(
                                         'Chat',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
+                                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
                                       ),
                                     ],
                                   ),

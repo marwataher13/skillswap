@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/swap_request_model.dart';
 import '../providers/swap_request_provider.dart';
+import '../providers/profile_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/swap_request_card.dart';
 import 'swap_request_details_screen.dart';
@@ -38,17 +39,16 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
   void _openDetails(int id) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => SwapRequestDetailsScreen(requestId: id),
-      ),
+      MaterialPageRoute(builder: (_) => SwapRequestDetailsScreen(requestId: id)),
     );
   }
 
   void _showSnack(String msg, {bool success = true}) {
+    final c = context.appColors;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: success ? const Color(0xFF16A34A) : AppColors.error,
+        backgroundColor: success ? const Color(0xFF16A34A) : c.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
@@ -60,14 +60,15 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final c = context.appColors;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
-            _buildTabBar(),
+            _buildHeader(c),
+            _buildTabBar(c),
             Expanded(child: _buildTabViews()),
           ],
         ),
@@ -75,9 +76,7 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
     );
   }
 
-  // ── Header ────────────────────────────────────────────────────────────────
-
-  Widget _buildHeader() {
+  Widget _buildHeader(AppColorsExtension c) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
       child: Column(
@@ -87,18 +86,16 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
             'Swap Requests',
             style: AppTextStyles.displayMedium.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: c.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
           Consumer<SwapRequestProvider>(
-            builder: (_, provider, __) {
+            builder: (_, provider, _) {
               if (provider.isLoading) {
                 return Text(
                   'Loading…',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textHint,
-                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(color: c.textHint),
                 );
               }
               final pending = provider.pendingReceivedCount;
@@ -107,9 +104,7 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
                     ? '$pending pending request${pending == 1 ? '' : 's'}'
                     : 'No pending requests',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: pending > 0
-                      ? const Color(0xFFD97706)
-                      : AppColors.textHint,
+                  color: pending > 0 ? const Color(0xFFD97706) : c.textHint,
                 ),
               );
             },
@@ -119,19 +114,17 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
     );
   }
 
-  // ── Tab bar ───────────────────────────────────────────────────────────────
-
-  Widget _buildTabBar() {
+  Widget _buildTabBar(AppColorsExtension c) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: c.surfaceVariant,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          color: AppColors.primary,
+          color: c.primary,
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         ),
         indicatorSize: TabBarIndicatorSize.tab,
@@ -141,13 +134,13 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
           color: Colors.white,
         ),
         unselectedLabelStyle: AppTextStyles.labelMedium.copyWith(
-          color: AppColors.textSecondary,
+          color: c.textSecondary,
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: AppColors.textSecondary,
+        unselectedLabelColor: c.textSecondary,
         tabs: [
           Consumer<SwapRequestProvider>(
-            builder: (_, provider, __) {
+            builder: (_, provider, _) {
               final count = provider.pendingReceivedCount;
               return Tab(
                 child: Row(
@@ -156,7 +149,7 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
                     const Text('Received'),
                     if (count > 0) ...[
                       const SizedBox(width: 6),
-                      _Badge(count: count),
+                      _Badge(count: count, primaryColor: c.primary),
                     ],
                   ],
                 ),
@@ -169,33 +162,22 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen>
     );
   }
 
-  // ── Tab views ─────────────────────────────────────────────────────────────
-
   Widget _buildTabViews() {
     return TabBarView(
       controller: _tabController,
       children: [
-        _RequestList(
-          isSent: false,
-          onDetails: _openDetails,
-          onSnack: _showSnack,
-        ),
-        _RequestList(
-          isSent: true,
-          onDetails: _openDetails,
-          onSnack: _showSnack,
-        ),
+        _RequestList(isSent: false, onDetails: _openDetails, onSnack: _showSnack),
+        _RequestList(isSent: true, onDetails: _openDetails, onSnack: _showSnack),
       ],
     );
   }
 }
 
-// ── Notification badge ────────────────────────────────────────────────────────
-
 class _Badge extends StatelessWidget {
   final int count;
+  final Color primaryColor;
 
-  const _Badge({required this.count});
+  const _Badge({required this.count, required this.primaryColor});
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +190,7 @@ class _Badge extends StatelessWidget {
       child: Text(
         count > 9 ? '9+' : '$count',
         style: AppTextStyles.labelSmall.copyWith(
-          color: AppColors.primary,
+          color: primaryColor,
           fontSize: 10,
           fontWeight: FontWeight.w800,
         ),
@@ -216,8 +198,6 @@ class _Badge extends StatelessWidget {
     );
   }
 }
-
-// ── Reusable list for both tabs ───────────────────────────────────────────────
 
 class _RequestList extends StatelessWidget {
   final bool isSent;
@@ -233,23 +213,23 @@ class _RequestList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<SwapRequestProvider>(
-      builder: (_, provider, __) {
-        if (provider.isLoading) return _buildLoading();
+      builder: (_, provider, _) {
+        if (provider.isLoading) return _buildLoading(context);
         if (provider.error != null) return _buildError(context, provider);
         final list = isSent ? provider.sent : provider.received;
-        if (list.isEmpty) return _buildEmpty();
+        if (list.isEmpty) return _buildEmpty(context);
         return _buildList(context, provider, list);
       },
     );
   }
 
-  Widget _buildLoading() {
-    return const Center(
-      child: CircularProgressIndicator(color: AppColors.primary),
-    );
+  Widget _buildLoading(BuildContext context) {
+    final c = context.appColors;
+    return Center(child: CircularProgressIndicator(color: c.primary));
   }
 
   Widget _buildError(BuildContext context, SwapRequestProvider provider) {
+    final c = context.appColors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -260,27 +240,15 @@ class _RequestList extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: c.error.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.wifi_off_rounded,
-                size: 32,
-                color: AppColors.error,
-              ),
+              child: Icon(Icons.wifi_off_rounded, size: 32, color: c.error),
             ),
             const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: AppTextStyles.titleMedium,
-              textAlign: TextAlign.center,
-            ),
+            Text('Something went wrong', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
             const SizedBox(height: 8),
-            Text(
-              provider.error!,
-              style: AppTextStyles.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
+            Text(provider.error!, style: AppTextStyles.bodyMedium, textAlign: TextAlign.center),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: provider.loadAll,
@@ -293,7 +261,8 @@ class _RequestList extends StatelessWidget {
     );
   }
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(BuildContext context) {
+    final c = context.appColors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -303,9 +272,9 @@ class _RequestList extends StatelessWidget {
             Container(
               width: 96,
               height: 96,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                  colors: [c.gradientStart, c.gradientEnd],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -342,8 +311,9 @@ class _RequestList extends StatelessWidget {
     SwapRequestProvider provider,
     List<SwapRequest> list,
   ) {
+    final c = context.appColors;
     return RefreshIndicator(
-      color: AppColors.primary,
+      color: c.primary,
       onRefresh: provider.loadAll,
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -371,6 +341,9 @@ class _RequestList extends StatelessWidget {
                       final err = await provider.accept(req.id);
                       if (err == null) {
                         onSnack('Request accepted! 🎉', success: true);
+                        if (context.mounted) {
+                          context.read<ProfileProvider>().loadData();
+                        }
                       } else {
                         onSnack(err, success: false);
                       }

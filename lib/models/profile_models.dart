@@ -6,16 +6,24 @@ import 'package:skillswap/config/app_config.dart';
 class ProfileData {
   final int id;
   final String name;
+  final String username;
   final String bio;
   final String phone;
   final String? avatarUrl;
+  final double trustScore;
+  final double averageRating;
+  final int totalSwaps;
 
   const ProfileData({
     this.id = 0,
     required this.name,
+    this.username = '',
     required this.bio,
     required this.phone,
     this.avatarUrl,
+    this.trustScore = 0.0,
+    this.averageRating = 0.0,
+    this.totalSwaps = 0,
   });
 
   factory ProfileData.fromJson(Map<String, dynamic> json) {
@@ -61,12 +69,20 @@ class ProfileData {
       }
     }
 
+    final trustVal = targetJson['trust_score'] ?? json['trust_score'];
+    final ratingVal = targetJson['average_rating'] ?? json['average_rating'];
+    final swapsVal = targetJson['total_swaps'] ?? json['total_swaps'];
+
     return ProfileData(
       id: int.tryParse(targetJson['id']?.toString() ?? '0') ?? 0,
       name: targetJson['name'] as String? ?? '',
+      username: targetJson['username']?.toString() ?? '',
       bio: targetJson['bio'] as String? ?? '',
       phone: targetJson['phone'] as String? ?? '',
       avatarUrl: resolvedAvatar,
+      trustScore: double.tryParse(trustVal?.toString() ?? '0') ?? 0.0,
+      averageRating: double.tryParse(ratingVal?.toString() ?? '0') ?? 0.0,
+      totalSwaps: int.tryParse(swapsVal?.toString() ?? '0') ?? 0,
     );
   }
 
@@ -80,27 +96,39 @@ class ProfileData {
     return {
       'id': id,
       'name': name,
+      'username': username,
       'bio': bio,
       'phone': phone,
       'avatar_url': cleanUrl,
       'profile_picture': cleanUrl,
+      'trust_score': trustScore,
+      'average_rating': averageRating,
+      'total_swaps': totalSwaps,
     };
   }
 
   ProfileData copyWith({
     int? id,
     String? name,
+    String? username,
     String? bio,
     String? phone,
     String? avatarUrl,
+    double? trustScore,
+    double? averageRating,
+    int? totalSwaps,
     bool clearAvatar = false,
   }) {
     return ProfileData(
       id: id ?? this.id,
       name: name ?? this.name,
+      username: username ?? this.username,
       bio: bio ?? this.bio,
       phone: phone ?? this.phone,
       avatarUrl: clearAvatar ? null : (avatarUrl ?? this.avatarUrl),
+      trustScore: trustScore ?? this.trustScore,
+      averageRating: averageRating ?? this.averageRating,
+      totalSwaps: totalSwaps ?? this.totalSwaps,
     );
   }
 }

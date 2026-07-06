@@ -40,14 +40,16 @@ class SearchSkillModel {
 class SearchResultModel {
   final int userId;
   final String name;
+  final String username;
   final String profilePicture;
-  final int trustScore;
+  final double trustScore;
   final double averageRating;
   final List<SearchSkillModel> skills;
 
   const SearchResultModel({
     required this.userId,
     required this.name,
+    this.username = '',
     required this.profilePicture,
     required this.trustScore,
     required this.averageRating,
@@ -76,8 +78,9 @@ class SearchResultModel {
     return SearchResultModel(
       userId: int.tryParse(json['user_id']?.toString() ?? '0') ?? 0,
       name: json['name']?.toString() ?? '',
+      username: json['username']?.toString() ?? '',
       profilePicture: resolvedPic,
-      trustScore: int.tryParse(json['trust_score']?.toString() ?? '0') ?? 0,
+      trustScore: double.tryParse(json['trust_score']?.toString() ?? '0') ?? 0.0,
       averageRating: double.tryParse(json['average_rating']?.toString() ?? '0') ?? 0.0,
       skills: (json['skills'] as List<dynamic>? ?? [])
           .map((s) => SearchSkillModel.fromJson(s as Map<String, dynamic>))

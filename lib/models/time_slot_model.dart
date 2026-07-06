@@ -20,13 +20,23 @@ class TimeSlotModel {
   });
 
   factory TimeSlotModel.fromJson(Map<String, dynamic> json) {
+    final rawAvailable = json['is_available'];
+    bool available = true;
+    if (rawAvailable is bool) {
+      available = rawAvailable;
+    } else if (rawAvailable is num) {
+      available = rawAvailable.toInt() == 1;
+    } else if (rawAvailable is String) {
+      available = rawAvailable == '1' || rawAvailable.toLowerCase() == 'true';
+    }
+
     return TimeSlotModel(
       id: json['id'] as int? ?? 0,
       userId: json['user_id'] as int? ?? 0,
       dayOfWeek: json['day_of_week'] as String? ?? '',
       startTime: json['start_time'] as String? ?? '',
       endTime: json['end_time'] as String? ?? '',
-      isAvailable: json['is_available'] as bool? ?? true,
+      isAvailable: available,
       createdAt: DateTime.tryParse(json['created_at'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updated_at'] as String? ?? ''),
     );

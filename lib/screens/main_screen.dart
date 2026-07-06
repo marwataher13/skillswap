@@ -1,57 +1,84 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../providers/swap_request_provider.dart';
+import '../providers/chat_provider.dart';
+import '../providers/notification_provider.dart';
 import 'home_screen.dart';
 import 'chat_list_screen.dart';
-import 'swap_requests_screen.dart';   // ← new screen
+import 'swap_requests_screen.dart';
 import 'my_skills_screen.dart';
 import 'setting_screen.dart';
- 
+
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
- 
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
- 
+
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
- 
+  Timer? _globalPollTimer;
+
   final List<Widget> _screens = const [
     HomeScreen(),
     ChatListScreen(),
-    SwapRequestsScreen(), // index 2 = Swap Requests tab
+    SwapRequestsScreen(),
     MySkillsScreen(),
     SettingsScreen(),
   ];
- 
+
   @override
   void initState() {
     super.initState();
-    // Pre-load swap requests so badge shows immediately
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SwapRequestProvider>().loadAll();
+      _loadAllData();
+      _startGlobalPolling();
     });
   }
- 
-  void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+
+  void _loadAllData() {
+    if (!mounted) return;
+    context.read<SwapRequestProvider>().loadAll();
+    context.read<ChatProvider>().loadConversations(silent: true);
+    context.read<NotificationProvider>().loadData();
   }
- 
+
+  void _startGlobalPolling() {
+    _globalPollTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _pollGlobalData(),
+    );
+  }
+
+  void _pollGlobalData() {
+    if (!mounted) return;
+    context.read<ChatProvider>().loadConversations(silent: true);
+    context.read<NotificationProvider>().refreshData();
+    context.read<SwapRequestProvider>().loadAll(silent: true);
+  }
+
+  @override
+  void dispose() {
+    _globalPollTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onItemTapped(int index) => setState(() => _selectedIndex = index);
+
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadow.withValues(alpha: 0.05),
+              color: c.shadow.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -61,77 +88,46 @@ class _MainScreenState extends State<MainScreen> {
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
+          backgroundColor: c.surface,
+          selectedItemColor: c.primary,
+          unselectedItemColor: c.textSecondary,
           selectedLabelStyle: AppTextStyles.labelSmall.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppColors.primary,
+            color: c.primary,
           ),
           unselectedLabelStyle: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.textSecondary,
+            color: c.textSecondary,
           ),
           items: [
-            // 1 – Home
             const BottomNavigationBarItem(
               icon: Icon(LucideIcons.home, size: 24),
               label: 'Home',
             ),
- 
-            // 2 – Chat
-            const BottomNavigationBarItem(
-              icon: Icon(LucideIcons.messageSquare, size: 24),
+            BottomNavigationBarItem(
+              icon: Consumer<ChatProvider>(
+                builder: (_, provider, _) => _NavBadge(
+                  icon: LucideIcons.messageSquare,
+                  count: provider.unreadConversationsCount,
+                  badgeColor: const Color(0xFFEF4444),
+                ),
+              ),
               label: 'Chat',
             ),
- 
-            // 3 – Swap Requests (with badge)
             BottomNavigationBarItem(
               icon: Consumer<SwapRequestProvider>(
-                builder: (_, provider, __) {
-                  final count = provider.pendingReceivedCount;
-                  return Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.swap_horiz_rounded, size: 26),
-                      if (count > 0)
-                        Positioned(
-                          top: -4,
-                          right: -6,
-                          child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFD97706),
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              count > 9 ? '9+' : '$count',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                },
+                builder: (_, provider, _) => _NavBadge(
+                  icon: Icons.swap_horiz_rounded,
+                  iconSize: 26,
+                  count: provider.pendingReceivedCount,
+                  badgeColor: const Color(0xFFD97706),
+                ),
               ),
               label: 'Requests',
             ),
- 
-            // 4 – My Skills
             const BottomNavigationBarItem(
               icon: Icon(LucideIcons.repeat, size: 24),
               label: 'Skills',
             ),
- 
-            // 5 – Settings
             const BottomNavigationBarItem(
               icon: Icon(LucideIcons.settings, size: 24),
               label: 'Settings',
@@ -139,6 +135,52 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NavBadge extends StatelessWidget {
+  final IconData icon;
+  final double iconSize;
+  final int count;
+  final Color badgeColor;
+
+  const _NavBadge({
+    required this.icon,
+    required this.count,
+    required this.badgeColor,
+    this.iconSize = 24,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon, size: iconSize),
+        if (count > 0)
+          Positioned(
+            top: -4,
+            right: -6,
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              child: Text(
+                count > 9 ? '9+' : '$count',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

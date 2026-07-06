@@ -82,4 +82,20 @@ class SwapRequest {
       receiver: receiver,
     );
   }
+
+  String? get requestedSkill {
+    if (message == null) return null;
+    final regExp = RegExp(r'^\[Requested Skill:\s*(.*?)\](?:\r?\n|$)');
+    final match = regExp.firstMatch(message!);
+    if (match != null) {
+      return match.group(1);
+    }
+    return null;
+  }
+
+  String get cleanMessage {
+    if (message == null) return '';
+    final regExp = RegExp(r'^\[Requested Skill:\s*(.*?)\](?:\r?\n|$)');
+    return message!.replaceFirst(regExp, '');
+  }
 }

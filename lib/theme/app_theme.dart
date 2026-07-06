@@ -74,57 +74,48 @@ class AppTextStyles {
     fontSize: 34,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.5,
-    color: AppColors.textPrimary,
   );
 
   static TextStyle displayMedium = GoogleFonts.poppins(
     fontSize: 28,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.3,
-    color: AppColors.textPrimary,
   );
 
   static TextStyle headlineLarge = GoogleFonts.poppins(
     fontSize: 24,
     fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
   );
 
   static TextStyle headlineMedium = GoogleFonts.poppins(
     fontSize: 20,
     fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
   );
 
   static TextStyle titleMedium = GoogleFonts.poppins(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
   );
 
   static TextStyle bodyLarge = GoogleFonts.poppins(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    color: AppColors.textPrimary,
   );
 
   static TextStyle bodyMedium = GoogleFonts.poppins(
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    color: AppColors.textSecondary,
   );
 
   static TextStyle labelMedium = GoogleFonts.poppins(
     fontSize: 13,
     fontWeight: FontWeight.w500,
-    color: AppColors.textSecondary,
     letterSpacing: 0.1,
   );
 
   static TextStyle labelSmall = GoogleFonts.poppins(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    color: AppColors.textHint,
   );
 }
 
@@ -164,9 +155,326 @@ class AppShadows {
   ];
 }
 
+// ─── Dynamic Color Extension (ThemeExtension) ────────────────────────────────
+/// All app-specific colors live here so they adapt when themeMode changes.
+/// Access via `context.appColors.X` in any widget build method.
+class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
+  const AppColorsExtension({
+    required this.background,
+    required this.surface,
+    required this.surfaceVariant,
+    required this.inputFill,
+    required this.chatCard,
+    required this.primary,
+    required this.primaryDark,
+    required this.primaryLight,
+    required this.caramelRoast,
+    required this.mochaBean,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textHint,
+    required this.border,
+    required this.divider,
+    required this.error,
+    required this.success,
+    required this.gradientStart,
+    required this.gradientEnd,
+    required this.gradientDarkStart,
+    required this.shadow,
+  });
+
+  final Color background;
+  final Color surface;
+  final Color surfaceVariant;
+  final Color inputFill;
+  final Color chatCard;
+  final Color primary;
+  final Color primaryDark;
+  final Color primaryLight;
+  final Color caramelRoast;
+  final Color mochaBean;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textHint;
+  final Color border;
+  final Color divider;
+  final Color error;
+  final Color success;
+  final Color gradientStart;
+  final Color gradientEnd;
+  final Color gradientDarkStart;
+  final Color shadow;
+
+  static const light = AppColorsExtension(
+    background: Color(0xFFF3E9D7),
+    surface: Color(0xFFFFFFFF),
+    surfaceVariant: Color(0xFFE8D8C7),
+    inputFill: Color(0xFFF7F0E6),
+    chatCard: Color(0xFFF7F0E6),
+    primary: Color(0xFFB08968),
+    primaryDark: Color(0xFF3B2A22),
+    primaryLight: Color(0xFFF3E9D7),
+    caramelRoast: Color(0xFFB08968),
+    mochaBean: Color(0xFF7A553A),
+    textPrimary: Color(0xFF3B2A22),
+    textSecondary: Color(0xFF7A553A),
+    textHint: Color(0xFFA38772),
+    border: Color(0xFFD6BFA6),
+    divider: Color(0xFFE3D3C4),
+    error: Color(0xFFBA1A1A),
+    success: Color(0xFF4F6F52),
+    gradientStart: Color(0xFFB08968),
+    gradientEnd: Color(0xFF7A553A),
+    gradientDarkStart: Color(0xFF7A553A),
+    shadow: Color(0x1A3B2A22),
+  );
+
+  static const dark = AppColorsExtension(
+    background: Color(0xFF1C1108),
+    surface: Color(0xFF2D1D11),
+    surfaceVariant: Color(0xFF3B2A1E),
+    inputFill: Color(0xFF2D1D11),
+    chatCard: Color(0xFF3B2A1E),
+    primary: Color(0xFFB08968),
+    primaryDark: Color(0xFFD4B896),
+    primaryLight: Color(0xFF5C3D28),
+    caramelRoast: Color(0xFFB08968),
+    mochaBean: Color(0xFFC9A882),
+    textPrimary: Color(0xFFF3E9D7),
+    textSecondary: Color(0xFFC9A882),
+    textHint: Color(0xFF8C6E58),
+    border: Color(0xFF5C3D28),
+    divider: Color(0xFF5C3D28),
+    error: Color(0xFFCF6679),
+    success: Color(0xFF6BAD6E),
+    gradientStart: Color(0xFFB08968),
+    gradientEnd: Color(0xFF7A553A),
+    gradientDarkStart: Color(0xFF7A553A),
+    shadow: Color(0x40000000),
+  );
+
+  @override
+  AppColorsExtension copyWith({
+    Color? background, Color? surface, Color? surfaceVariant,
+    Color? inputFill, Color? chatCard, Color? primary, Color? primaryDark,
+    Color? primaryLight, Color? caramelRoast, Color? mochaBean,
+    Color? textPrimary, Color? textSecondary, Color? textHint,
+    Color? border, Color? divider, Color? error, Color? success,
+    Color? gradientStart, Color? gradientEnd, Color? gradientDarkStart,
+    Color? shadow,
+  }) => AppColorsExtension(
+    background: background ?? this.background,
+    surface: surface ?? this.surface,
+    surfaceVariant: surfaceVariant ?? this.surfaceVariant,
+    inputFill: inputFill ?? this.inputFill,
+    chatCard: chatCard ?? this.chatCard,
+    primary: primary ?? this.primary,
+    primaryDark: primaryDark ?? this.primaryDark,
+    primaryLight: primaryLight ?? this.primaryLight,
+    caramelRoast: caramelRoast ?? this.caramelRoast,
+    mochaBean: mochaBean ?? this.mochaBean,
+    textPrimary: textPrimary ?? this.textPrimary,
+    textSecondary: textSecondary ?? this.textSecondary,
+    textHint: textHint ?? this.textHint,
+    border: border ?? this.border,
+    divider: divider ?? this.divider,
+    error: error ?? this.error,
+    success: success ?? this.success,
+    gradientStart: gradientStart ?? this.gradientStart,
+    gradientEnd: gradientEnd ?? this.gradientEnd,
+    gradientDarkStart: gradientDarkStart ?? this.gradientDarkStart,
+    shadow: shadow ?? this.shadow,
+  );
+
+  @override
+  AppColorsExtension lerp(ThemeExtension<AppColorsExtension>? other, double t) {
+    if (other is! AppColorsExtension) return this;
+    return AppColorsExtension(
+      background: Color.lerp(background, other.background, t)!,
+      surface: Color.lerp(surface, other.surface, t)!,
+      surfaceVariant: Color.lerp(surfaceVariant, other.surfaceVariant, t)!,
+      inputFill: Color.lerp(inputFill, other.inputFill, t)!,
+      chatCard: Color.lerp(chatCard, other.chatCard, t)!,
+      primary: Color.lerp(primary, other.primary, t)!,
+      primaryDark: Color.lerp(primaryDark, other.primaryDark, t)!,
+      primaryLight: Color.lerp(primaryLight, other.primaryLight, t)!,
+      caramelRoast: Color.lerp(caramelRoast, other.caramelRoast, t)!,
+      mochaBean: Color.lerp(mochaBean, other.mochaBean, t)!,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
+      textHint: Color.lerp(textHint, other.textHint, t)!,
+      border: Color.lerp(border, other.border, t)!,
+      divider: Color.lerp(divider, other.divider, t)!,
+      error: Color.lerp(error, other.error, t)!,
+      success: Color.lerp(success, other.success, t)!,
+      gradientStart: Color.lerp(gradientStart, other.gradientStart, t)!,
+      gradientEnd: Color.lerp(gradientEnd, other.gradientEnd, t)!,
+      gradientDarkStart: Color.lerp(gradientDarkStart, other.gradientDarkStart, t)!,
+      shadow: Color.lerp(shadow, other.shadow, t)!,
+    );
+  }
+}
+
+extension AppColorsContext on BuildContext {
+  AppColorsExtension get appColors =>
+      Theme.of(this).extension<AppColorsExtension>()!;
+}
+
+// ─── Dark Color Tokens ───────────────────────────────────────────────────────
+class AppColorsDark {
+  AppColorsDark._();
+
+  static const Color background = Color(0xFF1C1108);
+  static const Color surface = Color(0xFF2D1D11);
+  static const Color textPrimary = Color(0xFFF3E9D7);
+  static const Color textSecondary = Color(0xFFC9A882);
+  static const Color textHint = Color(0xFF8C6E58);
+  static const Color border = Color(0xFF5C3D28);
+  static const Color error = Color(0xFFCF6679);
+}
+
 // ─── Theme Data ───────────────────────────────────────────────────────────────
 class AppTheme {
   AppTheme._();
+
+  static ThemeData get darkTheme {
+    final base = GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme);
+
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: AppColorsDark.background,
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+        primary: AppColors.primary,
+        onPrimary: Colors.white,
+        secondary: Color(0xFF5C3D28),
+        onSecondary: AppColorsDark.textPrimary,
+        error: AppColorsDark.error,
+        onError: Colors.white,
+        surface: AppColorsDark.surface,
+        onSurface: AppColorsDark.textPrimary,
+        surfaceContainerHighest: Color(0xFF3B2A1E),
+        onSurfaceVariant: AppColorsDark.textSecondary,
+        outline: AppColorsDark.border,
+      ),
+
+      textTheme: base.copyWith(
+        displayLarge: base.displayLarge?.copyWith(
+          color: AppColorsDark.textPrimary,
+          fontWeight: FontWeight.w700,
+          fontSize: 34,
+          letterSpacing: -0.5,
+        ),
+        displayMedium: base.displayMedium?.copyWith(
+          color: AppColorsDark.textPrimary,
+          fontWeight: FontWeight.w700,
+          fontSize: 28,
+          letterSpacing: -0.3,
+        ),
+        headlineLarge: base.headlineLarge?.copyWith(
+          color: AppColorsDark.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 24,
+        ),
+        headlineMedium: base.headlineMedium?.copyWith(
+          color: AppColorsDark.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 20,
+        ),
+        titleMedium: base.titleMedium?.copyWith(
+          color: AppColorsDark.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+        bodyLarge: base.bodyLarge?.copyWith(
+          color: AppColorsDark.textPrimary,
+          fontWeight: FontWeight.w400,
+          fontSize: 16,
+        ),
+        bodyMedium: base.bodyMedium?.copyWith(
+          color: AppColorsDark.textSecondary,
+          fontWeight: FontWeight.w400,
+          fontSize: 14,
+        ),
+        labelMedium: base.labelMedium?.copyWith(
+          color: AppColorsDark.textSecondary,
+          fontWeight: FontWeight.w500,
+          fontSize: 13,
+          letterSpacing: 0.1,
+        ),
+        labelSmall: base.labelSmall?.copyWith(
+          color: AppColorsDark.textHint,
+          fontWeight: FontWeight.w400,
+          fontSize: 12,
+        ),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          textStyle: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+          minimumSize: const Size(64, 52),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColorsDark.surface,
+        hintStyle: GoogleFonts.poppins(
+          color: AppColorsDark.textHint,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: const BorderSide(color: AppColorsDark.border, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
+        prefixIconColor: AppColorsDark.textSecondary,
+        suffixIconColor: AppColorsDark.textSecondary,
+      ),
+
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: AppColorsDark.surface,
+        selectedItemColor: AppColorsDark.textPrimary,
+        unselectedItemColor: AppColorsDark.textHint,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+        selectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        unselectedLabelStyle: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      extensions: const [AppColorsExtension.dark],
+    );
+  }
 
   static ThemeData get lightTheme {
     final base = GoogleFonts.poppinsTextTheme();
@@ -191,16 +499,17 @@ class AppTheme {
       ),
 
       textTheme: base.copyWith(
-        displayLarge: base.displayLarge?.merge(AppTextStyles.displayLarge),
-        displayMedium: base.displayMedium?.merge(AppTextStyles.displayMedium),
-        headlineLarge: base.headlineLarge?.merge(AppTextStyles.headlineLarge),
+        displayLarge: base.displayLarge?.merge(AppTextStyles.displayLarge).copyWith(color: AppColors.textPrimary),
+        displayMedium: base.displayMedium?.merge(AppTextStyles.displayMedium).copyWith(color: AppColors.textPrimary),
+        headlineLarge: base.headlineLarge?.merge(AppTextStyles.headlineLarge).copyWith(color: AppColors.textPrimary),
         headlineMedium: base.headlineMedium?.merge(
           AppTextStyles.headlineMedium,
-        ),
-        titleMedium: base.titleMedium?.merge(AppTextStyles.titleMedium),
-        bodyLarge: base.bodyLarge?.merge(AppTextStyles.bodyLarge),
-        bodyMedium: base.bodyMedium?.merge(AppTextStyles.bodyMedium),
-        labelMedium: base.labelMedium?.merge(AppTextStyles.labelMedium),
+        ).copyWith(color: AppColors.textPrimary),
+        titleMedium: base.titleMedium?.merge(AppTextStyles.titleMedium).copyWith(color: AppColors.textPrimary),
+        bodyLarge: base.bodyLarge?.merge(AppTextStyles.bodyLarge).copyWith(color: AppColors.textPrimary),
+        bodyMedium: base.bodyMedium?.merge(AppTextStyles.bodyMedium).copyWith(color: AppColors.textSecondary),
+        labelMedium: base.labelMedium?.merge(AppTextStyles.labelMedium).copyWith(color: AppColors.textSecondary),
+        labelSmall: base.labelSmall?.merge(AppTextStyles.labelSmall).copyWith(color: AppColors.textHint),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -212,13 +521,13 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
           textStyle: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.3,
           ),
-          minimumSize: const Size(double.infinity, 56),
+          minimumSize: const Size(64, 52),
         ),
       ),
 
@@ -266,6 +575,7 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
       ),
+      extensions: const [AppColorsExtension.light],
     );
   }
 }

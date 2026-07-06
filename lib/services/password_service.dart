@@ -42,7 +42,7 @@ class PasswordService {
             headers: _headers,
             body: jsonEncode({'email': email}),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       final message = body['message'] as String? ?? 'Unknown error';
@@ -77,7 +77,7 @@ class PasswordService {
             headers: _headers,
             body: jsonEncode({'email': email, 'otp': otp}),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       final message = body['message'] as String? ?? 'Unknown error';
@@ -128,7 +128,7 @@ class PasswordService {
               'password_confirmation': passwordConfirmation,
             }),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       final body = jsonDecode(response.body) as Map<String, dynamic>;
       final message = body['message'] as String? ?? 'Unknown error';

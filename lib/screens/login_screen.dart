@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:skillswap/providers/profile_provider.dart';
+import 'package:skillswap/providers/notification_provider.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
@@ -18,13 +19,13 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final _emailController = TextEditingController();
+  final _usernameOrEmailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameOrEmailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -33,21 +34,15 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.pushReplacementNamed(context, '/register');
   }
 
-  // ── Validation ──────────────────────────────
   String? _validate() {
-    final email = _emailController.text.trim();
+    final usernameOrEmail = _usernameOrEmailController.text.trim();
     final password = _passwordController.text;
-
-    if (email.isEmpty || !email.contains('@')) {
-      return 'Please enter a valid email address';
-    }
-    if (password.isEmpty) {
-      return 'Please enter your password';
-    }
+    if (usernameOrEmail.isEmpty) return 'Please enter your username or email';
+    if (usernameOrEmail.length < 3) return 'Username or email must be at least 3 characters';
+    if (password.isEmpty) return 'Please enter your password';
     return null;
   }
 
-  // ── Submit ───────────────────────────────────
   Future<void> _handleLogin() async {
     FocusScope.of(context).unfocus();
 
@@ -61,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       final result = await _authService.login(
-        email: _emailController.text.trim(),
+        usernameOrEmail: _usernameOrEmailController.text.trim(),
         password: _passwordController.text,
       );
 
@@ -71,9 +66,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result.isSuccess) {
         await AuthService.saveToken(result.token ?? '');
         if (!mounted) return;
-        
-        // Force refresh ProfileProvider cache with the new token
-        await context.read<ProfileProvider>().loadData();
+
+        await Future.wait([
+          context.read<ProfileProvider>().loadData(),
+          context.read<NotificationProvider>().loadData(),
+        ]);
         if (!mounted) return;
 
         _showSnackBar('Logged in successfully! Welcome back.', isError: false);
@@ -88,7 +85,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ── Helpers ──────────────────────────────────
   void _showSnackBar(String message, {required bool isError}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -103,31 +99,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Gradient Header ───────────────────────────────────────────
-            _buildHeader(size),
-
-            // ── Form Card ─────────────────────────────────────────────────
+            _buildHeader(size, c),
             Transform.translate(
               offset: const Offset(0, -20),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildFormCard(),
+                child: _buildFormCard(c),
               ),
             ),
-
-            // ── Social Section ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
               child: Transform.translate(
                 offset: const Offset(0, -20),
-                child: _buildSocialSection(),
+                child: _buildSocialSection(c),
               ),
             ),
           ],
@@ -136,17 +128,17 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildHeader(Size size) {
+  Widget _buildHeader(Size size, AppColorsExtension c) {
     return Container(
       width: double.infinity,
       height: size.height * 0.28,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          colors: [c.gradientStart, c.gradientEnd],
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppSpacing.radiusXl),
           bottomRight: Radius.circular(AppSpacing.radiusXl),
         ),
@@ -166,45 +158,32 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(
-                      LucideIcons.refreshCw,
-                      size: 22,
-                      color: AppColors.surface,
-                    ),
+                    child: Icon(LucideIcons.refreshCw, size: 22, color: c.surface),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     'SkillSwap',
                     style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.surface,
-                      letterSpacing: 0.3,
+                      fontSize: 20, fontWeight: FontWeight.w700,
+                      color: c.surface, letterSpacing: 0.3,
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
-
               Text(
                 'Welcome Back',
                 style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.surface,
-                  letterSpacing: -0.3,
+                  fontSize: 28, fontWeight: FontWeight.w700,
+                  color: c.surface, letterSpacing: -0.3,
                 ),
               ),
-
               const SizedBox(height: 4),
-
               Text(
                 'Sign in to continue your journey',
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.surface.withValues(alpha: 0.70),
+                  fontSize: 14, fontWeight: FontWeight.w400,
+                  color: c.surface.withValues(alpha: 0.70),
                 ),
               ),
             ],
@@ -214,43 +193,34 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(AppColorsExtension c) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tab Switcher
           AuthTabSwitcher(
             selectedIndex: 0,
             onTabSelected: (index) {
               if (index == 1) _navigateToRegister();
             },
           ),
-
           const SizedBox(height: 28),
-
-          // Email
-          const FieldLabel('Email Address'),
-
+          const FieldLabel('Username or Email'),
           AppTextField(
-            hintText: 'Enter your email',
-            prefixIcon: LucideIcons.mail,
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
+            hintText: 'Enter your username or email',
+            prefixIcon: LucideIcons.user,
+            controller: _usernameOrEmailController,
+            keyboardType: TextInputType.text,
             textInputAction: TextInputAction.next,
           ),
-
           const SizedBox(height: 20),
-
-          // Password
           const FieldLabel('Password'),
-
           AppTextField(
             hintText: 'Enter your password',
             prefixIcon: LucideIcons.lock,
@@ -258,45 +228,32 @@ class _LoginScreenState extends State<LoginScreen> {
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.done,
             suffixIcon: GestureDetector(
-              onTap: () {
-                setState(() => _obscurePassword = !_obscurePassword);
-              },
+              onTap: () => setState(() => _obscurePassword = !_obscurePassword),
               child: Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
                   _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
                   size: 18,
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                 ),
               ),
             ),
           ),
-
-          // Forgot Password
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/forgot-password');
-              },
+              onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
+                foregroundColor: c.primary,
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
               ),
               child: Text(
                 'Forgot Password?',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.primary,
-                ),
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: c.primary),
               ),
             ),
           ),
-
           const SizedBox(height: 8),
-
-          // Login Button
           _isLoading
               ? const Center(
                   child: Padding(
@@ -310,32 +267,22 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildSocialSection() {
+  Widget _buildSocialSection(AppColorsExtension c) {
     return Column(
       children: [
         const SizedBox(height: 12),
-
-        // Navigate to Register
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               "Don't have an account? ",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: c.textSecondary),
             ),
-
             GestureDetector(
               onTap: _navigateToRegister,
               child: Text(
                 'Sign Up',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: c.primary),
               ),
             ),
           ],

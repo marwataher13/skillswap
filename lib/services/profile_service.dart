@@ -14,14 +14,22 @@ class ProfileService {
   Future<ProfileData> fetchProfile() async {
     final url = Uri.parse('$_baseUrl/api/profile');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       debugPrint('=== FETCH PROFILE RESPONSE ===');
       debugPrint('Response: ${response.body}');
       final data = jsonDecode(response.body);
       final profileJson = data is Map && data.containsKey('data') ? data['data'] : data;
-      return ProfileData.fromJson(profileJson as Map<String, dynamic>);
+      final resultMap = Map<String, dynamic>.from(profileJson as Map);
+      if (data is Map) {
+        for (final key in ['trust_score', 'average_rating', 'total_swaps']) {
+          if (data.containsKey(key) && !resultMap.containsKey(key)) {
+            resultMap[key] = data[key];
+          }
+        }
+      }
+      return ProfileData.fromJson(resultMap);
     } else {
       throw Exception('Failed to fetch profile: ${response.statusCode} ${response.body}');
     }
@@ -31,14 +39,22 @@ class ProfileService {
   Future<Map<String, dynamic>> fetchUserProfile(int userId) async {
     final url = Uri.parse('$_baseUrl/api/users/$userId');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       debugPrint('=== FETCH USER PROFILE RESPONSE ===');
       debugPrint('Response: ${response.body}');
       final data = jsonDecode(response.body);
       final userJson = data is Map && data.containsKey('user') ? data['user'] : data;
-      return Map<String, dynamic>.from(userJson as Map);
+      final resultMap = Map<String, dynamic>.from(userJson as Map);
+      if (data is Map) {
+        for (final key in ['trust_score', 'average_rating', 'total_swaps']) {
+          if (data.containsKey(key) && !resultMap.containsKey(key)) {
+            resultMap[key] = data[key];
+          }
+        }
+      }
+      return resultMap;
     } else {
       throw Exception('Failed to fetch user profile: ${response.statusCode} ${response.body}');
     }
@@ -52,14 +68,22 @@ class ProfileService {
       url,
       headers: headers,
       body: jsonEncode(profile.toJson()),
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       debugPrint('=== UPDATE PROFILE RESPONSE ===');
       debugPrint('Response: ${response.body}');
       final data = jsonDecode(response.body);
       final profileJson = data is Map && data.containsKey('data') ? data['data'] : data;
-      return ProfileData.fromJson(profileJson as Map<String, dynamic>);
+      final resultMap = Map<String, dynamic>.from(profileJson as Map);
+      if (data is Map) {
+        for (final key in ['trust_score', 'average_rating', 'total_swaps']) {
+          if (data.containsKey(key) && !resultMap.containsKey(key)) {
+            resultMap[key] = data[key];
+          }
+        }
+      }
+      return ProfileData.fromJson(resultMap);
     } else {
       throw Exception('Failed to update profile: ${response.statusCode} ${response.body}');
     }
@@ -82,7 +106,7 @@ class ProfileService {
     );
     request.files.add(multipartFile);
     
-    final streamedResponse = await request.send().timeout(const Duration(seconds: 20));
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 300));
     final response = await http.Response.fromStream(streamedResponse);
     
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -147,7 +171,7 @@ class ProfileService {
   Future<void> deleteProfilePicture() async {
     final url = Uri.parse('$_baseUrl/api/profile/picture');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete picture: ${response.statusCode} ${response.body}');
@@ -173,7 +197,7 @@ class ProfileService {
         'password': newPassword,
         'password_confirmation': confirmPassword,
       }),
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       final data = jsonDecode(response.body);
@@ -186,7 +210,7 @@ class ProfileService {
   Future<List<PortfolioItem>> fetchPortfolio() async {
     final url = Uri.parse('$_baseUrl/api/portfolio');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -220,7 +244,7 @@ class ProfileService {
     );
     request.files.add(multipartFile);
 
-    final streamedResponse = await request.send().timeout(const Duration(seconds: 20));
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 300));
     final response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -236,7 +260,7 @@ class ProfileService {
   Future<PortfolioItem> fetchPortfolioItem(String id) async {
     final url = Uri.parse('$_baseUrl/api/portfolio/$id');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -258,7 +282,7 @@ class ProfileService {
         'title': item.title,
         'type': item.type.name,
       }),
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -273,7 +297,7 @@ class ProfileService {
   Future<void> deletePortfolioItem(String id) async {
     final url = Uri.parse('$_baseUrl/api/portfolio/$id');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       throw Exception('Failed to delete portfolio item: ${response.statusCode} ${response.body}');

@@ -5,24 +5,45 @@ class NotificationModel {
   final String type;
   final bool read;
   final DateTime createdAt;
+  final Map<String, dynamic> payload;
 
-  NotificationModel({
+  const NotificationModel({
     required this.id,
     required this.title,
     required this.message,
     required this.type,
     required this.read,
     required this.createdAt,
+    this.payload = const {},
   });
 
+  NotificationModel copyWith({
+    String? id,
+    String? title,
+    String? message,
+    String? type,
+    bool? read,
+    DateTime? createdAt,
+    Map<String, dynamic>? payload,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      message: message ?? this.message,
+      type: type ?? this.type,
+      read: read ?? this.read,
+      createdAt: createdAt ?? this.createdAt,
+      payload: payload ?? this.payload,
+    );
+  }
+
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
-    // Resilient parsing to handle different backend responses
     final id = (json['id'] ?? json['_id'] ?? '').toString();
     final title = (json['title'] ?? '').toString();
-    final message = (json['message'] ?? json['body'] ?? json['content'] ?? '').toString();
+    final message =
+        (json['message'] ?? json['body'] ?? json['content'] ?? '').toString();
     final type = (json['type'] ?? 'info').toString();
-    
-    // Check various common read field names
+
     bool read = false;
     if (json.containsKey('read')) {
       read = json['read'] == true || json['read'] == 1;
@@ -33,7 +54,11 @@ class NotificationModel {
     }
 
     final createdAtStr = json['created_at'] ?? json['createdAt'] ?? '';
-    final createdAt = DateTime.tryParse(createdAtStr) ?? DateTime.now();
+    final createdAt = DateTime.tryParse(createdAtStr.toString()) ?? DateTime.now();
+
+    final dynamic rawPayload = json['data'];
+    final Map<String, dynamic> payload =
+        rawPayload is Map<String, dynamic> ? rawPayload : {};
 
     return NotificationModel(
       id: id,
@@ -42,17 +67,17 @@ class NotificationModel {
       type: type,
       read: read,
       createdAt: createdAt,
+      payload: payload,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'message': message,
-      'type': type,
-      'read': read,
-      'created_at': createdAt.toIso8601String(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'message': message,
+        'type': type,
+        'read': read,
+        'created_at': createdAt.toIso8601String(),
+        'data': payload,
+      };
 }

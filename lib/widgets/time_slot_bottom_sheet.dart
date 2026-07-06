@@ -4,7 +4,7 @@ import 'package:skillswap/services/time_slot_service.dart';
 import 'package:skillswap/theme/app_theme.dart';
 
 class TimeSlotBottomSheet extends StatefulWidget {
-  final TimeSlotModel? existing; // null = add, non-null = edit
+  final TimeSlotModel? existing;
   final VoidCallback onSaved;
 
   const TimeSlotBottomSheet({super.key, this.existing, required this.onSaved});
@@ -16,17 +16,8 @@ class TimeSlotBottomSheet extends StatefulWidget {
 class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
   final TimeSlotService _service = TimeSlotService();
 
-  static const _days = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+  static const _days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  // Start/end time options: 00:00 – 23:30 in 30-min steps
   static final List<String> _times = List.generate(48, (i) {
     final h = (i ~/ 2).toString().padLeft(2, '0');
     final m = (i % 2 == 0) ? '00' : '30';
@@ -49,7 +40,6 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
     _selectedEnd = _normalizeTime(e?.endTime ?? '11:00');
   }
 
-  /// Strip seconds from "09:00:00" → "09:00"
   String _normalizeTime(String t) {
     final parts = t.split(':');
     if (parts.length >= 2) return '${parts[0]}:${parts[1]}';
@@ -57,13 +47,22 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
   }
 
   Future<void> _save() async {
-    // Validate end > start
     if (_times.indexOf(_selectedEnd) <= _times.indexOf(_selectedStart)) {
-      _showError('End time must be after start time');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('End time must be after start time'),
+          backgroundColor: context.appColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
+        ),
+      );
       return;
     }
 
     setState(() => _isSaving = true);
+    final errorColor = context.appColors.error;
+    final successColor = context.appColors.success;
+
     try {
       if (_isEdit) {
         await _service.updateTimeSlot(
@@ -82,36 +81,29 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
       if (!mounted) return;
       Navigator.pop(context);
       widget.onSaved();
-      _showSuccess(_isEdit ? 'Time slot updated!' : 'Time slot added!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isEdit ? 'Time slot updated!' : 'Time slot added!'),
+          backgroundColor: successColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      _showError('Failed to save. Please try again.');
+      final cleanMsg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(cleanMsg.isNotEmpty ? cleanMsg : 'Failed to save. Please try again.'),
+          backgroundColor: errorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
-
-  void _showError(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(msg),
-      backgroundColor: AppColors.error,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-    ),
-  );
-
-  void _showSuccess(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(msg),
-      backgroundColor: AppColors.success,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-    ),
-  );
 
   String _fmtDisplay(String t) {
     try {
@@ -129,73 +121,49 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        20,
-        24,
-        MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
             Center(
               child: Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+                decoration: BoxDecoration(color: c.divider, borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 20),
-
-            // Header
             Row(
               children: [
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.gradientStart, AppColors.gradientEnd],
-                    ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [c.gradientStart, c.gradientEnd]),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.schedule_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
+                  child: const Icon(Icons.schedule_rounded, color: Colors.white, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _isEdit ? 'Edit Time Slot' : 'Add Time Slot',
-                      style: AppTextStyles.headlineMedium,
-                    ),
-                    Text(
-                      'Set your availability',
-                      style: AppTextStyles.bodyMedium,
-                    ),
+                    Text(_isEdit ? 'Edit Time Slot' : 'Add Time Slot', style: AppTextStyles.headlineMedium),
+                    Text('Set your availability', style: AppTextStyles.bodyMedium),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 28),
-
-            // Day selector
-            _label('Day of Week'),
+            _label('Day of Week', c),
             const SizedBox(height: 10),
             SizedBox(
               height: 40,
@@ -213,26 +181,17 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         gradient: sel
-                            ? const LinearGradient(
-                                colors: [
-                                  AppColors.gradientStart,
-                                  AppColors.gradientEnd,
-                                ],
-                              )
+                            ? LinearGradient(colors: [c.gradientStart, c.gradientEnd])
                             : null,
-                        color: sel ? null : AppColors.inputFill,
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusFull,
-                        ),
-                        border: Border.all(
-                          color: sel ? Colors.transparent : AppColors.border,
-                        ),
+                        color: sel ? null : c.inputFill,
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                        border: Border.all(color: sel ? Colors.transparent : c.border),
                       ),
                       child: Center(
                         child: Text(
                           day.substring(0, 3),
                           style: AppTextStyles.labelMedium.copyWith(
-                            color: sel ? Colors.white : AppColors.textSecondary,
+                            color: sel ? Colors.white : c.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -243,80 +202,56 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
-
-            // Time row
             Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _label('Start Time'),
+                      _label('Start Time', c),
                       const SizedBox(height: 8),
-                      _timeDropdown(
-                        value: _selectedStart,
-                        onChanged: (v) => setState(() => _selectedStart = v!),
-                      ),
+                      _timeDropdown(value: _selectedStart, onChanged: (v) => setState(() => _selectedStart = v!), c: c),
                     ],
                   ),
                 ),
                 const SizedBox(width: 12),
                 Padding(
                   padding: const EdgeInsets.only(top: 24),
-                  child: Text(
-                    '–',
-                    style: AppTextStyles.headlineMedium.copyWith(
-                      color: AppColors.textHint,
-                    ),
-                  ),
+                  child: Text('–', style: AppTextStyles.headlineMedium.copyWith(color: c.textHint)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _label('End Time'),
+                      _label('End Time', c),
                       const SizedBox(height: 8),
-                      _timeDropdown(
-                        value: _selectedEnd,
-                        onChanged: (v) => setState(() => _selectedEnd = v!),
-                      ),
+                      _timeDropdown(value: _selectedEnd, onChanged: (v) => setState(() => _selectedEnd = v!), c: c),
                     ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 10),
-
-            // Duration preview
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
+                color: c.primaryLight,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: AppColors.primary,
-                  ),
+                  Icon(Icons.info_outline_rounded, size: 16, color: c.primary),
                   const SizedBox(width: 8),
                   Text(
                     '${_fmtDisplay(_selectedStart)}  →  ${_fmtDisplay(_selectedEnd)}',
-                    style: AppTextStyles.labelMedium.copyWith(
-                      color: AppColors.mochaBean,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.labelMedium.copyWith(color: c.mochaBean, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 28),
-
-            // Save button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -325,10 +260,7 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
                     : Text(_isEdit ? 'Save Changes' : 'Add Time Slot'),
               ),
@@ -339,28 +271,25 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
     );
   }
 
-  Widget _label(String text) => Text(
+  Widget _label(String text, AppColorsExtension c) => Text(
     text,
-    style: AppTextStyles.labelMedium.copyWith(
-      color: AppColors.textPrimary,
-      fontWeight: FontWeight.w600,
-    ),
+    style: AppTextStyles.labelMedium.copyWith(color: c.textPrimary, fontWeight: FontWeight.w600),
   );
 
   Widget _timeDropdown({
     required String value,
     required void Function(String?) onChanged,
+    required AppColorsExtension c,
   }) {
-    // Ensure value is in list
     final safeValue = _times.contains(value) ? value : _times[0];
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.inputFill,
+        color: c.inputFill,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: c.border),
       ),
       child: DropdownButtonFormField<String>(
-        value: safeValue,
+        initialValue: safeValue,
         isExpanded: true,
         decoration: const InputDecoration(
           border: InputBorder.none,
@@ -368,18 +297,10 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
           focusedBorder: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         ),
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AppColors.textSecondary,
-        ),
-        dropdownColor: AppColors.surface,
+        icon: Icon(Icons.keyboard_arrow_down_rounded, color: c.textSecondary),
+        dropdownColor: c.surface,
         items: _times
-            .map(
-              (t) => DropdownMenuItem(
-                value: t,
-                child: Text(_fmtDisplay(t), style: AppTextStyles.bodyMedium),
-              ),
-            )
+            .map((t) => DropdownMenuItem(value: t, child: Text(_fmtDisplay(t), style: AppTextStyles.bodyMedium)))
             .toList(),
         onChanged: onChanged,
       ),

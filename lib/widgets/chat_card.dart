@@ -9,25 +9,28 @@ class ChatCard extends StatelessWidget {
   const ChatCard({super.key, required this.conversation, required this.onTap});
 
   String _formatTime(DateTime dt) {
+    final localDt = dt.toLocal();
     final now = DateTime.now();
-    final diff = now.difference(dt);
+    final today = DateTime(now.year, now.month, now.day);
+    final msgDate = DateTime(localDt.year, localDt.month, localDt.day);
+    final diff = today.difference(msgDate).inDays;
 
-    if (diff.inDays == 0) {
-      final h = dt.hour.toString().padLeft(2, '0');
-      final m = dt.minute.toString().padLeft(2, '0');
+    if (diff == 0) {
+      final h = localDt.hour.toString().padLeft(2, '0');
+      final m = localDt.minute.toString().padLeft(2, '0');
       return '$h:$m';
-    } else if (diff.inDays == 1) {
+    } else if (diff == 1) {
       return 'Yesterday';
-    } else if (diff.inDays < 7) {
+    } else if (diff < 7) {
       const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      return days[dt.weekday - 1];
-    } else {
-      return '${dt.day}/${dt.month}/${dt.year.toString().substring(2)}';
+      return days[localDt.weekday - 1];
     }
+    return '${localDt.day}/${localDt.month}/${localDt.year.toString().substring(2)}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final user = conversation.otherUser;
     final last = conversation.lastMessage;
     final hasUnread = conversation.unreadCount > 0;
@@ -35,21 +38,18 @@ class ChatCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: AppColors.chatCard,
+        color: c.chatCard,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          splashColor: AppColors.primaryLight.withOpacity(0.5),
+          splashColor: c.primaryLight.withValues(alpha: 0.5),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
               children: [
-                // ── Avatar ──────────────────────────────────────────────
-                _buildAvatar(user),
+                _buildAvatar(user, c),
                 const SizedBox(width: 12),
-
-                // ── Name + last message ──────────────────────────────────
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,9 +57,7 @@ class ChatCard extends StatelessWidget {
                       Text(
                         user.name,
                         style: AppTextStyles.titleMedium.copyWith(
-                          fontWeight: hasUnread
-                              ? FontWeight.w700
-                              : FontWeight.w600,
+                          fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w600,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -70,22 +68,14 @@ class ChatCard extends StatelessWidget {
                           if (last != null && last.isFromMe)
                             Padding(
                               padding: const EdgeInsets.only(right: 4),
-                              child: Icon(
-                                Icons.done_all_rounded,
-                                size: 14,
-                                color: AppColors.primary,
-                              ),
+                              child: Icon(Icons.done_all_rounded, size: 14, color: c.primary),
                             ),
                           Expanded(
                             child: Text(
                               last?.body ?? 'No messages yet',
                               style: AppTextStyles.bodyMedium.copyWith(
-                                fontWeight: hasUnread
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: hasUnread
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
+                                fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
+                                color: hasUnread ? c.textPrimary : c.textSecondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -97,20 +87,14 @@ class ChatCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-
-                // ── Time + badge ─────────────────────────────────────────
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
                       last != null ? _formatTime(last.sentAt) : '',
                       style: AppTextStyles.labelSmall.copyWith(
-                        color: hasUnread
-                            ? AppColors.primary
-                            : AppColors.textHint,
-                        fontWeight: hasUnread
-                            ? FontWeight.w600
-                            : FontWeight.w400,
+                        color: hasUnread ? c.primary : c.textHint,
+                        fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -120,21 +104,12 @@ class ChatCard extends StatelessWidget {
                         height: 22,
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              AppColors.gradientStart,
-                              AppColors.gradientEnd,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.radiusFull,
-                          ),
+                          color: c.primary,
+                          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          conversation.unreadCount > 99
-                              ? '99+'
-                              : '${conversation.unreadCount}',
+                          conversation.unreadCount > 99 ? '99+' : '${conversation.unreadCount}',
                           style: AppTextStyles.labelSmall.copyWith(
                             color: Colors.white,
                             fontSize: 11,
@@ -154,7 +129,8 @@ class ChatCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(OtherUser user) {
+  Widget _buildAvatar(OtherUser user, AppColorsExtension c) {
+    final hasAvatar = user.avatarUrl != null && user.avatarUrl!.isNotEmpty;
     return Stack(
       children: [
         Container(
@@ -162,16 +138,16 @@ class ChatCard extends StatelessWidget {
           height: 52,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: user.avatarUrl == null
-                ? const LinearGradient(
-                    colors: [AppColors.gradientStart, AppColors.gradientEnd],
+            gradient: hasAvatar
+                ? null
+                : LinearGradient(
+                    colors: [c.gradientStart, c.gradientEnd],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                  )
-                : null,
-            color: user.avatarUrl != null ? AppColors.surfaceVariant : null,
+                  ),
+            color: hasAvatar ? c.surfaceVariant : null,
           ),
-          child: user.avatarUrl != null
+          child: hasAvatar
               ? ClipOval(
                   child: Image.network(
                     user.avatarUrl!,
@@ -179,12 +155,30 @@ class ChatCard extends StatelessWidget {
                     width: 52,
                     height: 52,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _initialsFallback(user),
+                    errorBuilder: (_, _, _) => _gradientFallback(
+                      c: c,
+                      child: _initialsFallback(user),
+                    ),
                   ),
                 )
               : _initialsFallback(user),
         ),
       ],
+    );
+  }
+
+  Widget _gradientFallback({required AppColorsExtension c, required Widget child}) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [c.gradientStart, c.gradientEnd],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: child,
     );
   }
 

@@ -43,17 +43,9 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
     super.initState();
     _nameController = TextEditingController(text: widget.skill.name);
     _descController = TextEditingController(text: widget.skill.description);
-    _selectedType = _types.contains(widget.skill.type)
-        ? widget.skill.type
-        : 'teach';
-    _selectedLevel = _levels.contains(widget.skill.level)
-        ? widget.skill.level
-        : 'beginner';
-
-    // Match category by name
-    _selectedCategory = widget.categories
-        .where((c) => c.name == widget.skill.category)
-        .firstOrNull;
+    _selectedType = _types.contains(widget.skill.type) ? widget.skill.type : 'teach';
+    _selectedLevel = _levels.contains(widget.skill.level) ? widget.skill.level : 'beginner';
+    _selectedCategory = widget.categories.where((c) => c.name == widget.skill.category).firstOrNull;
   }
 
   @override
@@ -66,11 +58,14 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
-      _showError('Please select a category');
+      _showSnackBar('Please select a category', isError: true);
       return;
     }
 
     setState(() => _isSaving = true);
+    final successColor = context.appColors.success;
+    final errorColor = context.appColors.error;
+
     try {
       await _skillService.updateSkill(
         token: (await AuthService.getToken()) ?? '',
@@ -84,23 +79,22 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
       if (!mounted) return;
       Navigator.pop(context);
       widget.onUpdated();
-      _showSuccess('Skill updated successfully!');
+      _showSnackBar('Skill updated successfully!', isError: false, successColor: successColor);
     } catch (e) {
       if (!mounted) return;
-      _showError('Failed to update skill. Please try again.');
+      _showSnackBar('Failed to update skill. Please try again.', isError: true, errorColor: errorColor);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
   Future<void> _confirmDelete() async {
+    final c = context.appColors;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        ),
-        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
+        backgroundColor: c.surface,
         title: Text('Delete Skill', style: AppTextStyles.headlineMedium),
         content: Text(
           'Are you sure you want to delete "${widget.skill.name}"? This action cannot be undone.',
@@ -109,19 +103,11 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
+            child: Text('Cancel', style: AppTextStyles.labelMedium.copyWith(color: c.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              minimumSize: const Size(90, 40),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: c.error, minimumSize: const Size(90, 40)),
             child: const Text('Delete'),
           ),
         ],
@@ -134,6 +120,9 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
 
   Future<void> _delete() async {
     setState(() => _isDeleting = true);
+    final successColor = context.appColors.success;
+    final errorColor = context.appColors.error;
+
     try {
       await _skillService.deleteSkill(
         token: (await AuthService.getToken()) ?? '',
@@ -142,54 +131,37 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
       if (!mounted) return;
       Navigator.pop(context);
       widget.onDeleted();
-      _showSuccess('Skill deleted.');
+      _showSnackBar('Skill deleted.', isError: false, successColor: successColor);
     } catch (e) {
       if (!mounted) return;
-      _showError('Failed to delete skill. Please try again.');
+      _showSnackBar('Failed to delete skill. Please try again.', isError: true, errorColor: errorColor);
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }
   }
 
-  void _showError(String msg) {
+  void _showSnackBar(String msg, {required bool isError, Color? successColor, Color? errorColor}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppColors.error,
+        backgroundColor: isError
+            ? (errorColor ?? context.appColors.error)
+            : (successColor ?? context.appColors.success),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
-      ),
-    );
-  }
-
-  void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        20,
-        24,
-        MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -197,75 +169,47 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle
               Center(
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.divider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  decoration: BoxDecoration(color: c.divider, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Header row
               Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Manage Skill',
-                          style: AppTextStyles.headlineMedium,
-                        ),
-                        Text(
-                          'Edit or remove this skill',
-                          style: AppTextStyles.bodyMedium,
-                        ),
+                        Text('Manage Skill', style: AppTextStyles.headlineMedium),
+                        Text('Edit or remove this skill', style: AppTextStyles.bodyMedium),
                       ],
                     ),
                   ),
-                  // Delete button
                   Material(
-                    color: AppColors.error.withOpacity(0.1),
+                    color: c.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(
-                        AppSpacing.radiusFull,
-                      ),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                       onTap: (_isDeleting || _isSaving) ? null : _confirmDelete,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         child: _isDeleting
                             ? SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(
-                                  color: AppColors.error,
-                                  strokeWidth: 2,
-                                ),
+                                child: CircularProgressIndicator(color: c.error, strokeWidth: 2),
                               )
                             : Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.delete_outline_rounded,
-                                    color: AppColors.error,
-                                    size: 18,
-                                  ),
+                                  Icon(Icons.delete_outline_rounded, color: c.error, size: 18),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Delete',
-                                    style: AppTextStyles.labelMedium.copyWith(
-                                      color: AppColors.error,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    style: AppTextStyles.labelMedium.copyWith(color: c.error, fontWeight: FontWeight.w600),
                                   ),
                                 ],
                               ),
@@ -275,9 +219,7 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Skill Name
-              _buildLabel('Skill Name'),
+              _buildLabel('Skill Name', c),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
@@ -285,28 +227,23 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
                   hintText: 'e.g. Digital Illustration',
                   prefixIcon: Icon(Icons.star_outline_rounded),
                 ),
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Please enter a skill name'
-                    : null,
+                validator: (v) => v == null || v.trim().isEmpty ? 'Please enter a skill name' : null,
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
-
-              // Category
-              _buildLabel('Category'),
+              _buildLabel('Category', c),
               const SizedBox(height: 8),
               _buildDropdown<CategoryModel>(
                 value: _selectedCategory,
                 hint: 'Select category',
                 icon: Icons.category_outlined,
                 items: widget.categories,
-                itemLabel: (c) => c.name,
+                itemLabel: (cat) => cat.name,
                 onChanged: (v) => setState(() => _selectedCategory = v),
+                c: c,
               ),
               const SizedBox(height: 16),
-
-              // Type
-              _buildLabel('Type'),
+              _buildLabel('Type', c),
               const SizedBox(height: 8),
               _buildDropdown<String>(
                 value: _selectedType,
@@ -315,11 +252,10 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
                 items: _types,
                 itemLabel: (t) => t[0].toUpperCase() + t.substring(1),
                 onChanged: (v) => setState(() => _selectedType = v!),
+                c: c,
               ),
               const SizedBox(height: 16),
-
-              // Level
-              _buildLabel('Level'),
+              _buildLabel('Level', c),
               const SizedBox(height: 8),
               _buildDropdown<String>(
                 value: _selectedLevel,
@@ -328,11 +264,10 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
                 items: _levels,
                 itemLabel: (l) => l[0].toUpperCase() + l.substring(1),
                 onChanged: (v) => setState(() => _selectedLevel = v!),
+                c: c,
               ),
               const SizedBox(height: 16),
-
-              // Description
-              _buildLabel('Description (optional)'),
+              _buildLabel('Description (optional)', c),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descController,
@@ -347,8 +282,6 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
                 textInputAction: TextInputAction.done,
               ),
               const SizedBox(height: 28),
-
-              // Save Changes button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -357,10 +290,7 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('Save Changes'),
                 ),
@@ -372,13 +302,10 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, AppColorsExtension c) {
     return Text(
       text,
-      style: AppTextStyles.labelMedium.copyWith(
-        color: AppColors.textPrimary,
-        fontWeight: FontWeight.w600,
-      ),
+      style: AppTextStyles.labelMedium.copyWith(color: c.textPrimary, fontWeight: FontWeight.w600),
     );
   }
 
@@ -389,42 +316,39 @@ class _ManageSkillBottomSheetState extends State<ManageSkillBottomSheet> {
     required List<T> items,
     required String Function(T) itemLabel,
     required void Function(T?) onChanged,
+    required AppColorsExtension c,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.border),
+    return DropdownButtonFormField<T>(
+      value: value,
+      isExpanded: true,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: c.inputFill,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        prefixIcon: Icon(icon, color: c.textSecondary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: BorderSide(color: c.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: BorderSide(color: c.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: BorderSide(color: c.primary, width: 1.5),
+        ),
       ),
-      child: DropdownButtonFormField<T>(
-        value: value,
-        isExpanded: true,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-          prefixIcon: Icon(icon, color: AppColors.textSecondary),
-        ),
-        hint: Text(hint, style: AppTextStyles.bodyMedium),
-        dropdownColor: AppColors.surface,
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AppColors.textSecondary,
-        ),
-        items: items
-            .map(
-              (item) => DropdownMenuItem<T>(
+      hint: Text(hint, style: AppTextStyles.bodyMedium),
+      dropdownColor: c.surface,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: c.textSecondary),
+      items: items
+          .map((item) => DropdownMenuItem<T>(
                 value: item,
                 child: Text(itemLabel(item), style: AppTextStyles.bodyLarge),
-              ),
-            )
-            .toList(),
-        onChanged: onChanged,
-      ),
+              ))
+          .toList(),
+      onChanged: onChanged,
     );
   }
 }
