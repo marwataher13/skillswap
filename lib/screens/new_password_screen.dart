@@ -28,13 +28,10 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   String _email = '';
   String _token = '';
 
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _email = args?['email'] as String? ?? '';
     _token = args?['token'] as String? ?? '';
   }
@@ -43,14 +40,12 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   void initState() {
     super.initState();
     _newPasswordController.addListener(() {
-      if (_showNewPasswordError &&
-          _newPasswordController.text.trim().length >= 8) {
+      if (_showNewPasswordError && _newPasswordController.text.trim().length >= 8) {
         setState(() => _showNewPasswordError = false);
       }
     });
     _confirmPasswordController.addListener(() {
-      if (_showConfirmPasswordError &&
-          _confirmPasswordController.text.trim().isNotEmpty) {
+      if (_showConfirmPasswordError && _confirmPasswordController.text.trim().isNotEmpty) {
         setState(() => _showConfirmPasswordError = false);
       }
     });
@@ -63,8 +58,6 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     super.dispose();
   }
 
-  // ── Validation ─────────────────────────────────────────────────────────────
-
   bool _validate() {
     final newPass = _newPasswordController.text;
     final confirmPass = _confirmPasswordController.text;
@@ -72,9 +65,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
     if (newPass.isEmpty || newPass.length < 8) {
       setState(() {
-        _newPasswordErrorText = newPass.isEmpty
-            ? 'Password is required'
-            : 'Password must be at least 8 characters';
+        _newPasswordErrorText = newPass.isEmpty ? 'Password is required' : 'Password must be at least 8 characters';
         _showNewPasswordError = true;
       });
       valid = false;
@@ -97,8 +88,6 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     return valid;
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
-
   Future<void> _onUpdatePasswordPressed() async {
     FocusScope.of(context).unfocus();
     if (!_validate()) return;
@@ -108,6 +97,8 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       _showConfirmPasswordError = false;
       _isLoading = true;
     });
+
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     final result = await _passwordService.resetPassword(
       email: _email,
@@ -122,42 +113,33 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     if (result.isSuccess) {
       Navigator.pushReplacementNamed(context, '/password-reset-success');
     } else {
-      _showSnackBar(result.error ?? 'Failed to reset password', isError: true);
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(result.error ?? 'Failed to reset password'),
+          backgroundColor: const Color.fromARGB(255, 205, 36, 36),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
     }
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  void _showSnackBar(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError
-            ? const Color.fromARGB(255, 205, 36, 36)
-            : AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(size),
+            _buildHeader(size, c),
             Transform.translate(
               offset: const Offset(0, -28),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildFormCard(),
+                child: _buildFormCard(c),
               ),
             ),
           ],
@@ -166,17 +148,17 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     );
   }
 
-  Widget _buildHeader(Size size) {
+  Widget _buildHeader(Size size, AppColorsExtension c) {
     return Container(
       width: double.infinity,
       height: size.height * 0.30,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          colors: [c.gradientStart, c.gradientEnd],
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppSpacing.radiusXl),
           bottomRight: Radius.circular(AppSpacing.radiusXl),
         ),
@@ -189,28 +171,21 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
               ),
               const Spacer(),
               Text(
                 'New Password',
                 style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: -0.3,
+                  fontSize: 28, fontWeight: FontWeight.w700,
+                  color: Colors.white, letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Create a strong safety boundary',
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
+                  fontSize: 13, fontWeight: FontWeight.w400,
                   color: Colors.white.withValues(alpha: 0.85),
                 ),
               ),
@@ -222,11 +197,11 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(AppColorsExtension c) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: AppShadows.card,
       ),
@@ -237,26 +212,15 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
             child: Container(
               width: 72,
               height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                LucideIcons.lock,
-                size: 30,
-                color: AppColors.primary,
-              ),
+              decoration: BoxDecoration(color: c.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+              child: Icon(LucideIcons.lock, size: 30, color: c.primary),
             ),
           ),
           const SizedBox(height: 16),
           Center(
             child: Text(
               'Create New Password',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: c.textPrimary),
             ),
           ),
           const SizedBox(height: 8),
@@ -264,17 +228,10 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
             child: Text(
               'Choose a secure credentials combination to\ncomplete the flow.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
+              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400, color: c.textSecondary, height: 1.5),
             ),
           ),
           const SizedBox(height: 24),
-
-          // ── New Password ──
           const FieldLabel('New Password'),
           const SizedBox(height: 8),
           AppTextField(
@@ -287,22 +244,15 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               onTap: () => setState(() => _obscureNew = !_obscureNew),
               child: Icon(
                 _obscureNew ? LucideIcons.eye : LucideIcons.eyeOff,
-                size: 18,
-                color: AppColors.textSecondary,
+                size: 18, color: c.textSecondary,
               ),
             ),
           ),
           if (_showNewPasswordError) ...[
             const SizedBox(height: 6),
-            Text(
-              _newPasswordErrorText,
-              style: GoogleFonts.poppins(fontSize: 12, color: AppColors.error),
-            ),
+            Text(_newPasswordErrorText, style: GoogleFonts.poppins(fontSize: 12, color: c.error)),
           ],
-
           const SizedBox(height: 16),
-
-          // ── Confirm Password ──
           const FieldLabel('Confirm Password'),
           const SizedBox(height: 8),
           AppTextField(
@@ -315,31 +265,23 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               onTap: () => setState(() => _obscureConfirm = !_obscureConfirm),
               child: Icon(
                 _obscureConfirm ? LucideIcons.eye : LucideIcons.eyeOff,
-                size: 18,
-                color: AppColors.textSecondary,
+                size: 18, color: c.textSecondary,
               ),
             ),
           ),
           if (_showConfirmPasswordError) ...[
             const SizedBox(height: 6),
-            Text(
-              _confirmErrorText,
-              style: GoogleFonts.poppins(fontSize: 12, color: AppColors.error),
-            ),
+            Text(_confirmErrorText, style: GoogleFonts.poppins(fontSize: 12, color: c.error)),
           ],
-
           const SizedBox(height: 28),
           _isLoading
-              ? const Center(
+              ? Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: CircularProgressIndicator(color: c.primary),
                   ),
                 )
-              : PrimaryButton(
-                  label: 'Update Password',
-                  onPressed: _onUpdatePasswordPressed,
-                ),
+              : PrimaryButton(label: 'Update Password', onPressed: _onUpdatePasswordPressed),
         ],
       ),
     );

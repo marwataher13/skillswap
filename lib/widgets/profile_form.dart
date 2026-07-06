@@ -19,6 +19,7 @@ class ProfileForm extends StatefulWidget {
 class _ProfileFormState extends State<ProfileForm> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameCtrl;
+  late TextEditingController _usernameCtrl;
   late TextEditingController _bioCtrl;
   late TextEditingController _phoneCtrl;
 
@@ -27,6 +28,7 @@ class _ProfileFormState extends State<ProfileForm> {
     super.initState();
     final profile = context.read<ProfileProvider>().profile;
     _nameCtrl  = TextEditingController(text: profile.name);
+    _usernameCtrl = TextEditingController(text: profile.username);
     _bioCtrl   = TextEditingController(text: profile.bio);
     _phoneCtrl = TextEditingController(text: profile.phone);
   }
@@ -34,6 +36,7 @@ class _ProfileFormState extends State<ProfileForm> {
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _usernameCtrl.dispose();
     _bioCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
@@ -45,6 +48,16 @@ class _ProfileFormState extends State<ProfileForm> {
     if (v == null || v.trim().isEmpty) return 'Name is required';
     if (v.trim().length < 2) return 'Name must be at least 2 characters';
     if (v.trim().length > 60) return 'Name must be under 60 characters';
+    return null;
+  }
+
+  String? _validateUsername(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Username is required';
+    if (v.trim().length < 3) return 'Username must be at least 3 characters';
+    if (v.trim().length > 30) return 'Username must be under 30 characters';
+    if (!RegExp(r'^[a-zA-Z0-9_\.]+$').hasMatch(v.trim())) {
+      return 'Username can only contain letters, numbers, underscores, and dots';
+    }
     return null;
   }
 
@@ -72,6 +85,7 @@ class _ProfileFormState extends State<ProfileForm> {
       await provider.saveProfile(
         provider.profile.copyWith(
           name: _nameCtrl.text.trim(),
+          username: _usernameCtrl.text.trim(),
           bio: _bioCtrl.text.trim(),
           phone: _phoneCtrl.text.trim(),
         ),
@@ -133,6 +147,19 @@ class _ProfileFormState extends State<ProfileForm> {
               icon: LucideIcons.user,
               validator: _validateName,
               maxLength: 60,
+              action: TextInputAction.next,
+            ),
+            const SizedBox(height: 16),
+
+            // ── Username ──
+            const FieldLabel('Username'),
+            const SizedBox(height: 8),
+            _buildField(
+              controller: _usernameCtrl,
+              hint: 'Your username',
+              icon: LucideIcons.userCheck,
+              validator: _validateUsername,
+              maxLength: 30,
               action: TextInputAction.next,
             ),
             const SizedBox(height: 16),

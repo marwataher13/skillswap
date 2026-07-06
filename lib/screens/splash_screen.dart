@@ -16,42 +16,43 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _controller;
   late Animation<double> _animation;
   Timer? _timer;
- 
-   @override
-   void initState() {
-     super.initState();
-     _controller = AnimationController(
-       duration: const Duration(milliseconds: 1500),
-       vsync: this,
-     );
-     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-     _controller.forward();
- 
-     _timer = Timer(const Duration(seconds: 3), () async {
-       if (mounted) {
-         final hasActiveSession = await AuthService.hasToken();
-         if (mounted) {
-           if (hasActiveSession) {
-             Navigator.pushReplacementNamed(context, '/main');
-           } else {
-             Navigator.pushReplacementNamed(context, '/login');
-           }
-         }
-       }
-     });
-   }
- 
-   @override
-   void dispose() {
-     _timer?.cancel();
-     _controller.dispose();
-     super.dispose();
-   }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+    _controller.forward();
+
+    _timer = Timer(const Duration(seconds: 3), () async {
+      if (mounted) {
+        final hasActiveSession = await AuthService.hasToken();
+        if (mounted) {
+          if (hasActiveSession) {
+            Navigator.pushReplacementNamed(context, '/main');
+          } else {
+            Navigator.pushReplacementNamed(context, '/login');
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: Center(
         child: FadeTransition(
           opacity: _animation,
@@ -61,30 +62,30 @@ class _SplashScreenState extends State<SplashScreen>
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: c.surface,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.shadow.withValues(alpha: 0.05),
+                      color: c.shadow.withValues(alpha: 0.05),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.refreshCw,
                   size: 60,
-                  color: AppColors.gradientDarkStart,
+                  color: c.gradientDarkStart,
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 'SkillSwap',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  color: AppColors.gradientDarkStart,
+                  color: c.gradientDarkStart,
                 ),
               ),
               const SizedBox(height: 8),
@@ -92,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen>
                 'Exchange Knowledge',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppColors.textHint,
+                  color: c.textHint,
                   fontWeight: FontWeight.w400,
                 ),
               ),

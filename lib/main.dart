@@ -7,6 +7,7 @@ import 'package:skillswap/providers/review_provider.dart';
 import 'package:skillswap/providers/notification_provider.dart';
 import 'package:skillswap/providers/chat_provider.dart';
 import 'package:skillswap/providers/swap_request_provider.dart';
+import 'package:skillswap/providers/theme_provider.dart';
 import 'package:skillswap/screens/profile_screen.dart';
 import 'package:skillswap/screens/profile_view_screen.dart';
 import 'package:skillswap/screens/skill_details_screen.dart';
@@ -27,7 +28,6 @@ import 'screens/password_reset_success_screen.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 
-//test
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -36,6 +36,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => ReviewProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
@@ -52,11 +53,15 @@ class SkillSwapApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SkillSwap',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: '/',
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) => MaterialApp(
+        title: 'SkillSwap',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode:
+            themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+        initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -79,6 +84,7 @@ class SkillSwapApp extends StatelessWidget {
         '/search': (context) => const AdvancedSearchScreen(),
         '/notifications': (context) => const NotificationsScreen(),
       },
+    ),
     );
   }
 }

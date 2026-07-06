@@ -5,8 +5,6 @@ import 'package:skillswap/theme/app_theme.dart';
 import 'package:skillswap/widgets/time_slot_card.dart';
 import 'package:skillswap/widgets/time_slot_bottom_sheet.dart';
 
-/// Drop this widget anywhere in your scroll view.
-/// It is self-contained: manages its own state, loads data independently.
 class TimeSlotSection extends StatefulWidget {
   const TimeSlotSection({super.key});
 
@@ -21,7 +19,6 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
   bool _isLoading = true;
   String? _error;
 
-  // Track which slot ids are currently toggling
   final Set<int> _toggling = {};
 
   @override
@@ -54,14 +51,10 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
   Future<void> _toggle(TimeSlotModel slot) async {
     if (_toggling.contains(slot.id)) return;
 
-    // Optimistic update
     setState(() {
       _toggling.add(slot.id);
       _slots = _slots
-          .map(
-            (s) =>
-                s.id == slot.id ? s.copyWith(isAvailable: !s.isAvailable) : s,
-          )
+          .map((s) => s.id == slot.id ? s.copyWith(isAvailable: !s.isAvailable) : s)
           .toList();
     });
 
@@ -72,15 +65,10 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
         _slots = _slots.map((s) => s.id == updated.id ? updated : s).toList();
       });
     } catch (_) {
-      // Revert optimistic update on failure
       if (!mounted) return;
       setState(() {
         _slots = _slots
-            .map(
-              (s) => s.id == slot.id
-                  ? s.copyWith(isAvailable: slot.isAvailable)
-                  : s,
-            )
+            .map((s) => s.id == slot.id ? s.copyWith(isAvailable: slot.isAvailable) : s)
             .toList();
       });
       _showError('Failed to update availability');
@@ -90,13 +78,12 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
   }
 
   Future<void> _delete(TimeSlotModel slot) async {
+    final c = context.appColors;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        ),
-        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
+        backgroundColor: c.surface,
         title: Text('Delete Slot', style: AppTextStyles.headlineMedium),
         content: Text(
           'Remove "${slot.dayOfWeek} ${slot.startTime}–${slot.endTime}"?',
@@ -105,19 +92,11 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
+            child: Text('Cancel', style: AppTextStyles.labelMedium.copyWith(color: c.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              minimumSize: const Size(90, 40),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: c.error, minimumSize: const Size(90, 40)),
             child: const Text('Delete'),
           ),
         ],
@@ -159,11 +138,9 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppColors.error,
+        backgroundColor: context.appColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
       ),
     );
   }
@@ -173,21 +150,19 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppColors.success,
+        backgroundColor: context.appColors.success,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section header ──────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 16, 0),
           child: Row(
@@ -196,97 +171,60 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Available Time Slots',
-                      style: AppTextStyles.titleMedium,
-                    ),
-                    Text(
-                      'Your weekly availability',
-                      style: AppTextStyles.labelSmall,
-                    ),
+                    Text('Available Time Slots', style: AppTextStyles.titleMedium),
+                    Text('Your weekly availability', style: AppTextStyles.labelSmall),
                   ],
                 ),
               ),
-              // Add button
               GestureDetector(
                 onTap: _openAdd,
                 child: Container(
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.gradientStart, AppColors.gradientEnd],
-                    ),
+                    gradient: LinearGradient(colors: [c.gradientStart, c.gradientEnd]),
                     shape: BoxShape.circle,
                     boxShadow: AppShadows.button,
                   ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 14),
-
-        // ── Content ─────────────────────────────────────────────
-        _buildContent(),
+        _buildContent(c),
       ],
     );
   }
 
-  Widget _buildContent() {
-    if (_isLoading) return _buildShimmer();
-    if (_error != null) return _buildError();
-    if (_slots.isEmpty) return _buildEmpty();
+  Widget _buildContent(AppColorsExtension c) {
+    if (_isLoading) return const _BuildShimmer();
+    if (_error != null) return _buildError(c);
+    if (_slots.isEmpty) return _buildEmpty(c);
     return _buildList();
   }
 
-  Widget _buildShimmer() {
-    return SizedBox(
-      height: 190,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: 3,
-        itemBuilder: (_, __) => _ShimmerCard(),
-      ),
-    );
-  }
-
-  Widget _buildError() {
+  Widget _buildError(AppColorsExtension c) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.07),
+          color: c.error.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          border: Border.all(color: AppColors.error.withOpacity(0.2)),
+          border: Border.all(color: c.error.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
-            Icon(Icons.wifi_off_rounded, color: AppColors.error, size: 20),
+            Icon(Icons.wifi_off_rounded, color: c.error, size: 20),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                'Could not load time slots',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.error,
-                ),
-              ),
+              child: Text('Could not load time slots', style: AppTextStyles.bodyMedium.copyWith(color: c.error)),
             ),
             TextButton(
               onPressed: _load,
-              child: Text(
-                'Retry',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.primary,
-                ),
-              ),
+              child: Text('Retry', style: AppTextStyles.labelMedium.copyWith(color: c.primary)),
             ),
           ],
         ),
@@ -294,19 +232,16 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
     );
   }
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(AppColorsExtension c) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          border: Border.all(
-            color: AppColors.border.withOpacity(0.6),
-            style: BorderStyle.solid,
-          ),
+          border: Border.all(color: c.border.withValues(alpha: 0.6)),
           boxShadow: AppShadows.card,
         ),
         child: Column(
@@ -314,24 +249,14 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
             Container(
               width: 68,
               height: 68,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.gradientStart, AppColors.gradientEnd],
-                ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [c.gradientStart, c.gradientEnd]),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.schedule_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
+              child: const Icon(Icons.schedule_rounded, color: Colors.white, size: 32),
             ),
             const SizedBox(height: 14),
-            Text(
-              'No time slots yet',
-              style: AppTextStyles.titleMedium,
-              textAlign: TextAlign.center,
-            ),
+            Text('No time slots yet', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
             const SizedBox(height: 6),
             Text(
               'Add your availability so others\ncan schedule with you.',
@@ -345,9 +270,7 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
                 onPressed: _openAdd,
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Add Slot'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(160, 44),
-                ),
+                style: ElevatedButton.styleFrom(minimumSize: const Size(160, 44)),
               ),
             ),
           ],
@@ -379,24 +302,39 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
   }
 }
 
-// ── Shimmer placeholder ───────────────────────────────────────────────────────
+class _BuildShimmer extends StatelessWidget {
+  const _BuildShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 190,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: 3,
+        itemBuilder: (context, index) => const _ShimmerCard(),
+      ),
+    );
+  }
+}
+
 class _ShimmerCard extends StatefulWidget {
+  const _ShimmerCard();
+
   @override
   State<_ShimmerCard> createState() => _ShimmerCardState();
 }
 
-class _ShimmerCardState extends State<_ShimmerCard>
-    with SingleTickerProviderStateMixin {
+class _ShimmerCardState extends State<_ShimmerCard> with SingleTickerProviderStateMixin {
   late AnimationController _ctrl;
   late Animation<double> _anim;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+      ..repeat(reverse: true);
     _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
   }
 
@@ -408,18 +346,15 @@ class _ShimmerCardState extends State<_ShimmerCard>
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => Container(
+      builder: (context, child) => Container(
         width: 168,
         height: 190,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: Color.lerp(
-            AppColors.surfaceVariant,
-            AppColors.surface,
-            _anim.value,
-          ),
+          color: Color.lerp(c.surfaceVariant, c.surface, _anim.value),
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         ),
       ),

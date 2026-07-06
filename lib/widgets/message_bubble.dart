@@ -15,21 +15,21 @@ class MessageBubble extends StatelessWidget {
   });
 
   String _formatTime(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
+    final localDt = dt.toLocal();
+    final h = localDt.hour.toString().padLeft(2, '0');
+    final m = localDt.minute.toString().padLeft(2, '0');
     return '$h:$m';
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final isMe = message.isFromMe;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
-        mainAxisAlignment: isMe
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) const SizedBox(width: 12),
@@ -40,22 +40,16 @@ class MessageBubble extends StatelessWidget {
                 constraints: BoxConstraints(
                   maxWidth: MediaQuery.of(context).size.width * 0.72,
                 ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   gradient: isMe
-                      ? const LinearGradient(
-                          colors: [
-                            AppColors.gradientStart,
-                            AppColors.gradientEnd,
-                          ],
+                      ? LinearGradient(
+                          colors: [c.gradientStart, c.gradientEnd],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         )
                       : null,
-                  color: isMe ? null : AppColors.surface,
+                  color: isMe ? null : c.surface,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(18),
                     topRight: const Radius.circular(18),
@@ -64,21 +58,19 @@ class MessageBubble extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Column(
-                  crossAxisAlignment: isMe
-                      ? CrossAxisAlignment.end
-                      : CrossAxisAlignment.start,
+                  crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                   children: [
                     Text(
                       message.body,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: isMe ? Colors.white : AppColors.textPrimary,
+                        color: isMe ? Colors.white : c.textPrimary,
                         height: 1.4,
                       ),
                     ),
@@ -91,8 +83,8 @@ class MessageBubble extends StatelessWidget {
                             _formatTime(message.sentAt),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: isMe
-                                  ? Colors.white.withOpacity(0.75)
-                                  : AppColors.textHint,
+                                  ? Colors.white.withValues(alpha: 0.75)
+                                  : c.textHint,
                               fontSize: 10,
                             ),
                           ),
@@ -101,7 +93,7 @@ class MessageBubble extends StatelessWidget {
                             Icon(
                               Icons.done_all_rounded,
                               size: 13,
-                              color: Colors.white.withOpacity(0.75),
+                              color: Colors.white.withValues(alpha: 0.75),
                             ),
                           ],
                         ],
@@ -119,62 +111,50 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
-/// Date divider between message groups
 class DateSeparator extends StatelessWidget {
   final DateTime date;
 
   const DateSeparator({super.key, required this.date});
 
   String _label() {
+    final localDt = date.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final msgDay = DateTime(date.year, date.month, date.day);
+    final msgDay = DateTime(localDt.year, localDt.month, localDt.day);
     final diff = today.difference(msgDay).inDays;
 
     if (diff == 0) return 'Today';
     if (diff == 1) return 'Yesterday';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[localDt.month - 1]} ${localDt.day}, ${localDt.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
         children: [
-          const Expanded(child: Divider(color: AppColors.divider)),
+          Expanded(child: Divider(color: c.divider)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.surfaceVariant,
+                color: c.surfaceVariant,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
               ),
               child: Text(
                 _label(),
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ),
-          const Expanded(child: Divider(color: AppColors.divider)),
+          Expanded(child: Divider(color: c.divider)),
         ],
       ),
     );

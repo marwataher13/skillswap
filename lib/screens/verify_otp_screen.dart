@@ -18,18 +18,9 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   static const int _otpLength = 6;
   static const int _resendSeconds = 4 * 60 + 53;
 
-  final List<TextEditingController> _controllers = List.generate(
-    _otpLength,
-    (_) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(
-    _otpLength,
-    (_) => FocusNode(),
-  );
-  final List<FocusNode> _keyboardFocusNodes = List.generate(
-    _otpLength,
-    (_) => FocusNode(),
-  );
+  final List<TextEditingController> _controllers = List.generate(_otpLength, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(_otpLength, (_) => FocusNode());
+  final List<FocusNode> _keyboardFocusNodes = List.generate(_otpLength, (_) => FocusNode());
 
   final _passwordService = PasswordService();
 
@@ -39,13 +30,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   Timer? _timer;
   String _email = '';
 
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args =
-        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _email = args?['email'] as String? ?? '';
   }
 
@@ -58,19 +46,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (final c in _controllers) {
-      c.dispose();
-    }
-    for (final f in _focusNodes) {
-      f.dispose();
-    }
-    for (final f in _keyboardFocusNodes) {
-      f.dispose();
-    }
+    for (final c in _controllers) { c.dispose(); }
+    for (final f in _focusNodes) { f.dispose(); }
+    for (final f in _keyboardFocusNodes) { f.dispose(); }
     super.dispose();
   }
-
-  // ── Timer ──────────────────────────────────────────────────────────────────
 
   void _startTimer() {
     _timer?.cancel();
@@ -79,10 +59,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
       _canResend = false;
     });
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) {
-        t.cancel();
-        return;
-      }
+      if (!mounted) { t.cancel(); return; }
       setState(() {
         if (_timerSeconds > 0) {
           _timerSeconds--;
@@ -100,24 +77,16 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  // ── OTP helpers ───────────────────────────────────────────────────────────
-
   String get _otpValue => _controllers.map((c) => c.text.trim()).join();
 
   void _clearOtp() {
-    for (final c in _controllers) {
-      c.clear();
-    }
+    for (final c in _controllers) { c.clear(); }
     _focusNodes.first.requestFocus();
   }
 
-  // ── Handlers ──────────────────────────────────────────────────────────────
-
   void _onOtpChanged(int index, String value) {
     if (value.length == _otpLength) {
-      for (int i = 0; i < _otpLength; i++) {
-        _controllers[i].text = value[i];
-      }
+      for (int i = 0; i < _otpLength; i++) { _controllers[i].text = value[i]; }
       _focusNodes.last.requestFocus();
       return;
     }
@@ -145,25 +114,23 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final successColor = context.appColors.success;
+
     final result = await _passwordService.verifyOtp(email: _email, otp: code);
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (result.isSuccess) {
-      _showSnackBar('OTP verified successfully! ✅', isError: false);
-      // Pass email forward; token will be empty until backend is updated
-      // (see backend modification note in the implementation guide)
+      scaffoldMessenger.showSnackBar(_snackBar('OTP verified successfully! ✅', isError: false, successColor: successColor));
       Navigator.pushNamed(
         context,
         '/new-password',
-        arguments: {
-          'email': _email,
-          'token': '', // ← replace with result.token once backend returns it
-        },
+        arguments: {'email': _email, 'token': ''},
       );
     } else {
-      _showSnackBar(result.error ?? 'Verification failed', isError: true);
+      scaffoldMessenger.showSnackBar(_snackBar(result.error ?? 'Verification failed', isError: true, successColor: successColor));
       _clearOtp();
     }
   }
@@ -172,50 +139,49 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     if (!_canResend) return;
     _clearOtp();
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final successColor = context.appColors.success;
+
     final result = await _passwordService.forgotPassword(email: _email);
     if (!mounted) return;
 
     if (result.isSuccess) {
       _startTimer();
-      _showSnackBar(
-        'A new OTP has been sent to your email! ✉️',
-        isError: false,
-      );
+      scaffoldMessenger.showSnackBar(_snackBar('A new OTP has been sent to your email! ✉️', isError: false, successColor: successColor));
     } else {
-      _showSnackBar(result.error ?? 'Failed to resend OTP', isError: true);
+      scaffoldMessenger.showSnackBar(_snackBar(result.error ?? 'Failed to resend OTP', isError: true, successColor: successColor));
     }
   }
 
   void _showSnackBar(String message, {required bool isError}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError
-            ? const Color.fromARGB(255, 205, 36, 36)
-            : AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
+      _snackBar(message, isError: isError, successColor: context.appColors.success),
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  SnackBar _snackBar(String message, {required bool isError, required Color successColor}) => SnackBar(
+    content: Text(message),
+    backgroundColor: isError ? const Color.fromARGB(255, 205, 36, 36) : successColor,
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    margin: const EdgeInsets.all(16),
+  );
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(size),
+            _buildHeader(size, c),
             Transform.translate(
               offset: const Offset(0, -28),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildFormCard(),
+                child: _buildFormCard(c),
               ),
             ),
           ],
@@ -224,17 +190,17 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     );
   }
 
-  Widget _buildHeader(Size size) {
+  Widget _buildHeader(Size size, AppColorsExtension c) {
     return Container(
       width: double.infinity,
       height: size.height * 0.30,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          colors: [c.gradientStart, c.gradientEnd],
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppSpacing.radiusXl),
           bottomRight: Radius.circular(AppSpacing.radiusXl),
         ),
@@ -247,28 +213,21 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
               ),
               const Spacer(),
               Text(
                 'Verify OTP',
                 style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: -0.3,
+                  fontSize: 28, fontWeight: FontWeight.w700,
+                  color: Colors.white, letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Verify security code matching',
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
+                  fontSize: 13, fontWeight: FontWeight.w400,
                   color: Colors.white.withValues(alpha: 0.85),
                 ),
               ),
@@ -280,11 +239,11 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(AppColorsExtension c) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: AppShadows.card,
       ),
@@ -296,25 +255,17 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
+                color: c.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                LucideIcons.terminal,
-                size: 30,
-                color: AppColors.primary,
-              ),
+              child: Icon(LucideIcons.terminal, size: 30, color: c.primary),
             ),
           ),
           const SizedBox(height: 16),
           Center(
             child: Text(
               'Enter 6-digit Code',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: c.textPrimary),
             ),
           ),
           const SizedBox(height: 8),
@@ -322,48 +273,36 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
             child: RichText(
               textAlign: TextAlign.center,
               text: TextSpan(
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
+                style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400, color: c.textSecondary, height: 1.5),
                 children: [
                   const TextSpan(text: 'We sent a secure code to '),
                   TextSpan(
                     text: _email,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
+                    style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: c.primary),
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 28),
-          _buildOtpRow(),
+          _buildOtpRow(c),
           const SizedBox(height: 24),
-          _buildResendRow(),
+          _buildResendRow(c),
           const SizedBox(height: 28),
           _isLoading
-              ? const Center(
+              ? Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: CircularProgressIndicator(color: c.primary),
                   ),
                 )
-              : PrimaryButton(
-                  label: 'Confirm OTP Code',
-                  onPressed: _onConfirmPressed,
-                ),
+              : PrimaryButton(label: 'Confirm OTP Code', onPressed: _onConfirmPressed),
         ],
       ),
     );
   }
 
-  Widget _buildOtpRow() {
+  Widget _buildOtpRow(AppColorsExtension c) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(_otpLength, (index) {
@@ -380,25 +319,18 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
               keyboardType: TextInputType.number,
               maxLength: 1,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: c.textPrimary),
               decoration: InputDecoration(
                 counterText: '',
                 filled: true,
-                fillColor: AppColors.primary.withValues(alpha: 0.08),
+                fillColor: c.primary.withValues(alpha: 0.08),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 2,
-                  ),
+                  borderSide: BorderSide(color: c.primary, width: 2),
                 ),
                 contentPadding: EdgeInsets.zero,
               ),
@@ -410,35 +342,23 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
     );
   }
 
-  Widget _buildResendRow() {
+  Widget _buildResendRow(AppColorsExtension c) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Resend code in:',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: AppColors.textSecondary,
-          ),
-        ),
+        Text('Resend code in:', style: GoogleFonts.poppins(fontSize: 13, color: c.textSecondary)),
         _canResend
             ? GestureDetector(
                 onTap: _onResendPressed,
                 child: Text(
                   'Resend',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: c.primary),
                 ),
               )
             : Text(
                 _formattedTimer,
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  fontSize: 13, fontWeight: FontWeight.w600, color: c.primary,
                   fontFeatures: [const FontFeature.tabularFigures()],
                 ),
               ),

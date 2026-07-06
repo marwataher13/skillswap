@@ -30,7 +30,6 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
       _isLoading = true;
       _error = null;
     });
-
     try {
       final data = await _skillService.fetchCategories();
       if (mounted) {
@@ -71,40 +70,34 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(
         title: Text(
           'Categories',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: c.textPrimary),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: c.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _loadCategories,
-          color: AppColors.primaryDark,
-          child: _buildContent(),
+          color: c.primaryDark,
+          child: _buildContent(c),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(AppColorsExtension c) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primary,
-        ),
-      );
+      return Center(child: CircularProgressIndicator(color: c.primary));
     }
 
     if (_error != null) {
@@ -116,21 +109,17 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  LucideIcons.alertTriangle,
-                  color: AppColors.error,
-                  size: 48,
-                ),
+                Icon(LucideIcons.alertTriangle, color: c.error, size: 48),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'Failed to load categories',
-                  style: AppTextStyles.titleMedium.copyWith(color: AppColors.textPrimary),
+                  style: AppTextStyles.titleMedium.copyWith(color: c.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   _error!,
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodyMedium.copyWith(color: c.textSecondary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -139,7 +128,7 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
                   icon: const Icon(LucideIcons.refreshCw, size: 16),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: c.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     minimumSize: const Size(120, 45),
                   ),
@@ -158,15 +147,11 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                LucideIcons.folderOpen,
-                color: AppColors.textHint,
-                size: 64,
-              ),
+              Icon(LucideIcons.folderOpen, color: c.textHint, size: 64),
               const SizedBox(height: AppSpacing.md),
               Text(
                 'No Categories Found',
-                style: AppTextStyles.titleMedium.copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.titleMedium.copyWith(color: c.textSecondary),
               ),
             ],
           ),
@@ -203,29 +188,21 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: c.surface,
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(
-                color: AppColors.border.withValues(alpha: 0.3),
-                width: 1,
-              ),
+              border: Border.all(color: c.border.withValues(alpha: 0.3), width: 1),
               boxShadow: AppShadows.subtle,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icon Container
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: c.primaryLight,
                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                   ),
-                  child: Icon(
-                    icon,
-                    color: AppColors.textPrimary,
-                    size: 24,
-                  ),
+                  child: Icon(icon, color: c.textPrimary, size: 24),
                 ),
                 const Spacer(),
                 Text(
@@ -233,7 +210,7 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -241,9 +218,7 @@ class _CategoriesDashboardScreenState extends State<CategoriesDashboardScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '${category.skillsCount} ${category.skillsCount == 1 ? 'skill' : 'skills'}',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
+                  style: AppTextStyles.labelSmall.copyWith(color: c.textSecondary),
                 ),
               ],
             ),

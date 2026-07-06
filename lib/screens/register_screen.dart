@@ -6,9 +6,6 @@ import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/auth_widgets.dart';
 
-// ─────────────────────────────────────────────
-// Register Screen
-// ─────────────────────────────────────────────
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -22,6 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
 
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -30,6 +28,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
@@ -38,49 +37,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validate() {
     final name = _nameController.text.trim();
+    final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirm = _confirmController.text.trim();
 
     if (kDebugMode) {
       debugPrint('name: "$name"');
+      debugPrint('username: "$username"');
       debugPrint('email: "$email"');
       debugPrint('password length: ${password.length}');
       debugPrint('confirm length: ${confirm.length}');
       debugPrint('are equal: ${password == confirm}');
     }
 
-    if (name.isEmpty) {
-      if (kDebugMode) {
-        debugPrint('FAILED: name empty');
-      }
-      return 'Please enter your full name';
+    if (name.isEmpty) return 'Please enter your full name';
+    if (username.isEmpty) return 'Please enter a username';
+    if (username.length < 3) return 'Username must be at least 3 characters';
+    if (username.length > 30) return 'Username must be under 30 characters';
+    if (!RegExp(r'^[a-zA-Z0-9_\.]+$').hasMatch(username)) {
+      return 'Username can only contain letters, numbers, underscores, and dots';
     }
-    if (email.isEmpty || !email.contains('@')) {
-      if (kDebugMode) {
-        debugPrint('FAILED: email invalid');
-      }
-      return 'Please enter a valid email address';
-    }
-    if (password.length < 6) {
-      if (kDebugMode) {
-        debugPrint('FAILED: password too short');
-      }
-      return 'Password must be at least 6 characters';
-    }
-    if (password != confirm) {
-      if (kDebugMode) {
-        debugPrint('FAILED: passwords do not match');
-      }
-      return 'Passwords do not match';
-    }
-    if (kDebugMode) {
-      debugPrint('VALIDATION PASSED');
-    }
+    if (email.isEmpty || !email.contains('@')) return 'Please enter a valid email address';
+    if (password.length < 6) return 'Password must be at least 6 characters';
+    if (password != confirm) return 'Passwords do not match';
     return null;
   }
 
-  // ── Submit ───────────────────────────────────
   Future<void> _handleRegister() async {
     FocusScope.of(context).unfocus();
 
@@ -95,6 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       final error = await _authService.register(
         name: _nameController.text.trim(),
+        username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -115,7 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  // ── Helpers ──────────────────────────────────
   void _navigateToLogin() {
     Navigator.pushReplacementNamed(context, '/login');
   }
@@ -132,33 +115,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // Build
-  // ─────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(size),
-
+            _buildHeader(size, c),
             Transform.translate(
               offset: const Offset(0, -20),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildFormCard(),
+                child: _buildFormCard(c),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
               child: Transform.translate(
                 offset: const Offset(0, -20),
-                child: _buildSocialSection(),
+                child: _buildSocialSection(c),
               ),
             ),
           ],
@@ -167,18 +146,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // ── Header ───────────────────────────────────
-  Widget _buildHeader(Size size) {
+  Widget _buildHeader(Size size, AppColorsExtension c) {
     return Container(
       width: double.infinity,
       height: size.height * 0.26,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          colors: [c.gradientStart, c.gradientEnd],
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppSpacing.radiusXl),
           bottomRight: Radius.circular(AppSpacing.radiusXl),
         ),
@@ -200,20 +178,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(
-                        LucideIcons.arrowLeft,
-                        size: 18,
-                        color: AppColors.surface,
-                      ),
+                      child: Icon(LucideIcons.arrowLeft, size: 18, color: c.surface),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'SkillSwap',
                     style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.surface.withValues(alpha: 0.90),
+                      fontSize: 18, fontWeight: FontWeight.w600,
+                      color: c.surface.withValues(alpha: 0.90),
                     ),
                   ),
                 ],
@@ -222,19 +195,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Text(
                 'Create Account',
                 style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.surface,
-                  letterSpacing: -0.3,
+                  fontSize: 28, fontWeight: FontWeight.w700,
+                  color: c.surface, letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Join a community of learners & teachers',
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.surface.withValues(alpha: 0.70),
+                  fontSize: 13, fontWeight: FontWeight.w400,
+                  color: c.surface.withValues(alpha: 0.70),
                 ),
               ),
             ],
@@ -244,12 +214,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // ── Form Card ────────────────────────────────
-  Widget _buildFormCard() {
+  Widget _buildFormCard(AppColorsExtension c) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: AppShadows.card,
       ),
@@ -262,10 +231,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               if (index == 0) _navigateToLogin();
             },
           ),
-
           const SizedBox(height: 28),
-
-          // Full Name
           const FieldLabel('Full Name'),
           AppTextField(
             hintText: 'Enter your full name',
@@ -274,10 +240,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
             keyboardType: TextInputType.name,
             textInputAction: TextInputAction.next,
           ),
-
           const SizedBox(height: 18),
-
-          // Email
+          const FieldLabel('Username'),
+          AppTextField(
+            hintText: 'Enter your username',
+            prefixIcon: LucideIcons.userCheck,
+            controller: _usernameController,
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 18),
           const FieldLabel('Email Address'),
           AppTextField(
             hintText: 'Enter your email address',
@@ -286,10 +258,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
           ),
-
           const SizedBox(height: 18),
-
-          // Password
           const FieldLabel('Password'),
           AppTextField(
             hintText: 'Create a password',
@@ -303,16 +272,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
                   _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
-                  size: 18,
-                  color: AppColors.textSecondary,
+                  size: 18, color: c.textSecondary,
                 ),
               ),
             ),
           ),
-
           const SizedBox(height: 18),
-
-          // Confirm Password
           const FieldLabel('Confirm Password'),
           AppTextField(
             hintText: 'Confirm your password',
@@ -326,16 +291,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
                   _obscureConfirm ? LucideIcons.eye : LucideIcons.eyeOff,
-                  size: 18,
-                  color: AppColors.textSecondary,
+                  size: 18, color: c.textSecondary,
                 ),
               ),
             ),
           ),
-
           const SizedBox(height: 28),
-
-          // Submit Button
           _isLoading
               ? const Center(
                   child: Padding(
@@ -343,39 +304,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: CircularProgressIndicator(),
                   ),
                 )
-              : PrimaryButton(
-                  label: 'Create Account',
-                  onPressed: _handleRegister,
-                ),
+              : PrimaryButton(label: 'Create Account', onPressed: _handleRegister),
         ],
       ),
     );
   }
 
-  Widget _buildSocialSection() {
+  Widget _buildSocialSection(AppColorsExtension c) {
     return Column(
       children: [
         const SizedBox(height: 12),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               'Already have an account? ',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: c.textSecondary),
             ),
             GestureDetector(
               onTap: _navigateToLogin,
               child: Text(
                 'Log In',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: c.primary),
               ),
             ),
           ],

@@ -8,7 +8,6 @@ class SkillItemTile extends StatelessWidget {
 
   const SkillItemTile({super.key, required this.skill, required this.onTap});
 
-  // Map category name → icon
   IconData _categoryIcon(String category) {
     switch (category.toLowerCase()) {
       case 'technology':
@@ -43,17 +42,6 @@ class SkillItemTile extends StatelessWidget {
     }
   }
 
-  Color _typeColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'teach':
-        return AppColors.success;
-      case 'learn':
-        return AppColors.primary;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
-
   Color _levelColor(String level) {
     switch (level.toLowerCase()) {
       case 'beginner':
@@ -63,68 +51,68 @@ class SkillItemTile extends StatelessWidget {
       case 'advanced':
         return const Color(0xFFE53935);
       default:
-        return AppColors.textHint;
+        return const Color(0xFFA38772);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
+
+    final typeColor = skill.type.toLowerCase() == 'teach'
+        ? c.success
+        : skill.type.toLowerCase() == 'learn'
+            ? c.primary
+            : c.textSecondary;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Material(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          splashColor: AppColors.primaryLight.withOpacity(0.4),
+          splashColor: c.primaryLight.withValues(alpha: 0.4),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
               boxShadow: AppShadows.card,
-              color: AppColors.surface,
+              color: c.surface,
             ),
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Category circle icon
                 Container(
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                    gradient: LinearGradient(
+                      colors: [c.gradientStart, c.gradientEnd],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.25),
+                        color: c.primary.withValues(alpha: 0.25),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Icon(
-                    _categoryIcon(skill.category),
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: Icon(_categoryIcon(skill.category), color: Colors.white, size: 24),
                 ),
 
                 const SizedBox(width: 14),
 
-                // Skill info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         skill.name,
-                        style: AppTextStyles.titleMedium.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                        style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.w700),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -132,9 +120,7 @@ class SkillItemTile extends StatelessWidget {
                         const SizedBox(height: 3),
                         Text(
                           skill.category,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.textHint,
-                          ),
+                          style: AppTextStyles.labelSmall.copyWith(color: c.textHint),
                         ),
                       ],
                       const SizedBox(height: 8),
@@ -142,16 +128,14 @@ class SkillItemTile extends StatelessWidget {
                         children: [
                           _buildBadge(
                             skill.type.isNotEmpty
-                                ? skill.type[0].toUpperCase() +
-                                      skill.type.substring(1)
+                                ? skill.type[0].toUpperCase() + skill.type.substring(1)
                                 : '',
-                            _typeColor(skill.type),
+                            typeColor,
                           ),
                           if (skill.level.isNotEmpty) ...[
                             const SizedBox(width: 6),
                             _buildBadge(
-                              skill.level[0].toUpperCase() +
-                                  skill.level.substring(1),
+                              skill.level[0].toUpperCase() + skill.level.substring(1),
                               _levelColor(skill.level),
                             ),
                           ],
@@ -161,19 +145,11 @@ class SkillItemTile extends StatelessWidget {
                   ),
                 ),
 
-                // Arrow
                 Container(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 14,
-                    color: AppColors.textHint,
-                  ),
+                  decoration: BoxDecoration(color: c.background, shape: BoxShape.circle),
+                  child: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: c.textHint),
                 ),
               ],
             ),
@@ -187,7 +163,7 @@ class SkillItemTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
       ),
       child: Text(

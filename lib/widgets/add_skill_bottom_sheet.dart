@@ -8,11 +8,7 @@ class AddSkillBottomSheet extends StatefulWidget {
   final List<CategoryModel> categories;
   final VoidCallback onSaved;
 
-  const AddSkillBottomSheet({
-    super.key,
-    required this.categories,
-    required this.onSaved,
-  });
+  const AddSkillBottomSheet({super.key, required this.categories, required this.onSaved});
 
   @override
   State<AddSkillBottomSheet> createState() => _AddSkillBottomSheetState();
@@ -47,6 +43,9 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
     }
 
     setState(() => _isSaving = true);
+    final errorColor = context.appColors.error;
+    final successColor = context.appColors.success;
+
     try {
       await _skillService.createSkill(
         token: (await AuthService.getToken()) ?? '',
@@ -59,54 +58,46 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
       if (!mounted) return;
       Navigator.pop(context);
       widget.onSaved();
-      _showSuccess('Skill added successfully!');
+      _showSuccess('Skill added successfully!', successColor);
     } catch (e) {
       if (!mounted) return;
-      _showError('Failed to add skill. Please try again.');
+      _showError('Failed to add skill. Please try again.', errorColor);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
-  void _showError(String msg) {
+  void _showError(String msg, [Color? errorColor]) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppColors.error,
+        backgroundColor: errorColor ?? context.appColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
       ),
     );
   }
 
-  void _showSuccess(String msg) {
+  void _showSuccess(String msg, Color successColor) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppColors.success,
+        backgroundColor: successColor,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        20,
-        24,
-        MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
+      padding: EdgeInsets.fromLTRB(24, 20, 24, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -114,29 +105,18 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle
               Center(
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.divider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  decoration: BoxDecoration(color: c.divider, borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 20),
-
-              // Title
               Text('Add New Skill', style: AppTextStyles.headlineMedium),
-              Text(
-                'Share what you can teach or want to learn',
-                style: AppTextStyles.bodyMedium,
-              ),
+              Text('Share what you can teach or want to learn', style: AppTextStyles.bodyMedium),
               const SizedBox(height: 24),
-
-              // Skill Name
-              _buildLabel('Skill Name'),
+              _buildLabel('Skill Name', c),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _nameController,
@@ -144,28 +124,23 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
                   hintText: 'e.g. Digital Illustration',
                   prefixIcon: Icon(Icons.star_outline_rounded),
                 ),
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Please enter a skill name'
-                    : null,
+                validator: (v) => v == null || v.trim().isEmpty ? 'Please enter a skill name' : null,
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
-
-              // Category
-              _buildLabel('Category'),
+              _buildLabel('Category', c),
               const SizedBox(height: 8),
               _buildDropdown<CategoryModel>(
                 value: _selectedCategory,
                 hint: 'Select category',
                 icon: Icons.category_outlined,
                 items: widget.categories,
-                itemLabel: (c) => c.name,
+                itemLabel: (cat) => cat.name,
                 onChanged: (v) => setState(() => _selectedCategory = v),
+                c: c,
               ),
               const SizedBox(height: 16),
-
-              // Type
-              _buildLabel('Type'),
+              _buildLabel('Type', c),
               const SizedBox(height: 8),
               _buildDropdown<String>(
                 value: _selectedType,
@@ -174,11 +149,10 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
                 items: _types,
                 itemLabel: (t) => t[0].toUpperCase() + t.substring(1),
                 onChanged: (v) => setState(() => _selectedType = v!),
+                c: c,
               ),
               const SizedBox(height: 16),
-
-              // Level
-              _buildLabel('Level'),
+              _buildLabel('Level', c),
               const SizedBox(height: 8),
               _buildDropdown<String>(
                 value: _selectedLevel,
@@ -187,11 +161,10 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
                 items: _levels,
                 itemLabel: (l) => l[0].toUpperCase() + l.substring(1),
                 onChanged: (v) => setState(() => _selectedLevel = v!),
+                c: c,
               ),
               const SizedBox(height: 16),
-
-              // Description
-              _buildLabel('Description (optional)'),
+              _buildLabel('Description (optional)', c),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _descController,
@@ -206,8 +179,6 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
                 textInputAction: TextInputAction.done,
               ),
               const SizedBox(height: 28),
-
-              // Save button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -216,10 +187,7 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('Add Skill'),
                 ),
@@ -231,13 +199,10 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, AppColorsExtension c) {
     return Text(
       text,
-      style: AppTextStyles.labelMedium.copyWith(
-        color: AppColors.textPrimary,
-        fontWeight: FontWeight.w600,
-      ),
+      style: AppTextStyles.labelMedium.copyWith(color: c.textPrimary, fontWeight: FontWeight.w600),
     );
   }
 
@@ -248,42 +213,39 @@ class _AddSkillBottomSheetState extends State<AddSkillBottomSheet> {
     required List<T> items,
     required String Function(T) itemLabel,
     required void Function(T?) onChanged,
+    required AppColorsExtension c,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.border),
+    return DropdownButtonFormField<T>(
+      value: value,
+      isExpanded: true,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: c.inputFill,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        prefixIcon: Icon(icon, color: c.textSecondary),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: BorderSide(color: c.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: BorderSide(color: c.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderSide: BorderSide(color: c.primary, width: 1.5),
+        ),
       ),
-      child: DropdownButtonFormField<T>(
-        value: value,
-        isExpanded: true,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
-          ),
-          prefixIcon: Icon(icon, color: AppColors.textSecondary),
-        ),
-        hint: Text(hint, style: AppTextStyles.bodyMedium),
-        dropdownColor: AppColors.surface,
-        icon: const Icon(
-          Icons.keyboard_arrow_down_rounded,
-          color: AppColors.textSecondary,
-        ),
-        items: items
-            .map(
-              (item) => DropdownMenuItem<T>(
+      hint: Text(hint, style: AppTextStyles.bodyMedium),
+      dropdownColor: c.surface,
+      icon: Icon(Icons.keyboard_arrow_down_rounded, color: c.textSecondary),
+      items: items
+          .map((item) => DropdownMenuItem<T>(
                 value: item,
                 child: Text(itemLabel(item), style: AppTextStyles.bodyLarge),
-              ),
-            )
-            .toList(),
-        onChanged: onChanged,
-      ),
+              ))
+          .toList(),
+      onChanged: onChanged,
     );
   }
 }

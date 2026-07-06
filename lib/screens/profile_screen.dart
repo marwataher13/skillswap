@@ -12,8 +12,6 @@ import '../widgets/profile_avatar.dart';
 import '../widgets/portfolio_section.dart';
 import '../../theme/app_theme.dart';
 
-/// Root screen for Edit Profile & Portfolio.
-/// Wrap with [ChangeNotifierProvider<ProfileProvider>] in your router.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -28,25 +26,22 @@ class _ProfileScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(context),
+      backgroundColor: c.background,
+      appBar: _buildAppBar(context, c),
       body: const _ProfileBody(),
       floatingActionButton: _AddFileFab(),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, AppColorsExtension c) {
     return AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(
-          Icons.arrow_back,
-          color: AppColors.textPrimary,
-          size: 22,
-        ),
+        icon: Icon(Icons.arrow_back, color: c.textPrimary, size: 22),
         onPressed: () => Navigator.pop(context),
       ),
       title: Text(
@@ -54,30 +49,25 @@ class _ProfileScreenContent extends StatelessWidget {
         style: GoogleFonts.poppins(
           fontSize: 18,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
         ),
       ),
     );
   }
 }
 
-// ── Scrollable body ────────────────────────────────────────────────────────────
-
 class _ProfileBody extends StatelessWidget {
   const _ProfileBody();
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final isLoading = context.watch<ProfileProvider>().isLoading;
 
     if (isLoading) {
-      return const SizedBox(
+      return SizedBox(
         height: 400,
-        child: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-          ),
-        ),
+        child: Center(child: CircularProgressIndicator(color: c.primary)),
       );
     }
 
@@ -87,62 +77,50 @@ class _ProfileBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 8),
-
-          // ── Avatar ──
           const ProfileAvatar(),
           const SizedBox(height: 28),
-
-          // ── Info form ──
           const ProfileForm(),
           const SizedBox(height: 28),
-
-          // ── Portfolio ──
-          _sectionLabel('Portfolio'),
+          _sectionLabel('Portfolio', c),
           const SizedBox(height: 12),
           const PortfolioSection(),
-
-          // FAB clearance
           const SizedBox(height: 100),
         ],
       ),
     );
   }
 
-  Widget _sectionLabel(String text) {
+  Widget _sectionLabel(String text, AppColorsExtension c) {
     return Text(
       text,
       style: GoogleFonts.poppins(
         fontSize: 13,
         fontWeight: FontWeight.w700,
-        color: AppColors.primary,
+        color: c.primary,
         letterSpacing: 0.8,
       ),
     );
   }
 }
 
-// ── Add File FAB ───────────────────────────────────────────────────────────────
-
 class _AddFileFab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return FloatingActionButton.extended(
       onPressed: () => _showAddFilePicker(context),
-      backgroundColor: AppColors.primary,
+      backgroundColor: c.primary,
       icon: const Icon(Icons.add, color: Colors.white),
       label: Text(
         'Add File',
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-          fontSize: 14,
-        ),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 14),
       ),
       elevation: 4,
     );
   }
 
   void _showAddFilePicker(BuildContext context) {
+    final c = context.appColors;
     final provider = context.read<ProfileProvider>();
 
     showModalBottomSheet(
@@ -150,10 +128,8 @@ class _AddFileFab extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppSpacing.radiusXl),
-          ),
+          color: c.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXl)),
           boxShadow: AppShadows.card,
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -161,13 +137,12 @@ class _AddFileFab extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drag handle
             Center(
               child: Container(
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.2),
+                  color: c.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -175,44 +150,19 @@ class _AddFileFab extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               'Add to Portfolio',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: c.textPrimary),
             ),
             const SizedBox(height: 4),
             Text(
               'Select a file type to browse from your device',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 12, color: c.textSecondary),
             ),
             const SizedBox(height: 16),
-            _pickerOption(
-              context,
-              provider,
-              ctx,
-              label: 'Browse Image (.png, .jpg)',
-              type: FileType.image,
-            ),
+            _pickerOption(context, provider, ctx, label: 'Browse Image (.png, .jpg)', type: FileType.image, c: c),
             const SizedBox(height: 10),
-            _pickerOption(
-              context,
-              provider,
-              ctx,
-              label: 'Browse PDF Document (.pdf)',
-              type: FileType.pdf,
-            ),
+            _pickerOption(context, provider, ctx, label: 'Browse PDF Document (.pdf)', type: FileType.pdf, c: c),
             const SizedBox(height: 10),
-            _pickerOption(
-              context,
-              provider,
-              ctx,
-              label: 'Browse Word Document (.docx)',
-              type: FileType.word,
-            ),
+            _pickerOption(context, provider, ctx, label: 'Browse Word Document (.docx)', type: FileType.word, c: c),
           ],
         ),
       ),
@@ -225,12 +175,14 @@ class _AddFileFab extends StatelessWidget {
     BuildContext sheetContext, {
     required String label,
     required FileType type,
+    required AppColorsExtension c,
   }) {
     return InkWell(
       onTap: () async {
-        Navigator.pop(sheetContext); // Close sheet
+        Navigator.pop(sheetContext);
         final scaffoldMessenger = ScaffoldMessenger.of(parentContext);
-        
+        final successColor = c.success;
+
         final extensions = switch (type) {
           FileType.image => ['png', 'jpg', 'jpeg'],
           FileType.pdf => ['pdf'],
@@ -244,9 +196,7 @@ class _AddFileFab extends StatelessWidget {
             withData: true,
           );
 
-          if (result == null || result.files.isEmpty) {
-            return; // User cancelled
-          }
+          if (result == null || result.files.isEmpty) return;
 
           final file = result.files.first;
           final name = file.name;
@@ -256,16 +206,11 @@ class _AddFileFab extends StatelessWidget {
             bytes = io.File(file.path!).readAsBytesSync();
           }
 
-          if (bytes == null) {
-            throw Exception('Failed to read selected file bytes');
-          }
+          if (bytes == null) throw Exception('Failed to read selected file bytes');
 
-          // Open the naming dialog
           if (!parentContext.mounted) return;
           final customTitle = await _showNameFileDialog(parentContext, name, type);
-          if (customTitle == null) {
-            return; // User cancelled the naming dialog
-          }
+          if (customTitle == null) return;
 
           final item = PortfolioItem(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -274,13 +219,13 @@ class _AddFileFab extends StatelessWidget {
           );
 
           await provider.addPortfolioItem(item, bytes);
-          
+
           scaffoldMessenger.showSnackBar(
-            _snackBar('"$customTitle" added successfully ✅', isError: false),
+            _snackBar('"$customTitle" added successfully ✅', isError: false, successColor: successColor),
           );
         } catch (e) {
           scaffoldMessenger.showSnackBar(
-            _snackBar('Failed to add file: $e', isError: true),
+            _snackBar('Failed to add file: $e', isError: true, successColor: successColor),
           );
         }
       },
@@ -288,7 +233,7 @@ class _AddFileFab extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: c.background,
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         ),
         child: Row(
@@ -298,18 +243,10 @@ class _AddFileFab extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary),
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: AppColors.textSecondary,
-            ),
+            Icon(Icons.chevron_right, size: 20, color: c.textSecondary),
           ],
         ),
       ),
@@ -325,19 +262,13 @@ class _AddFileFab extends StatelessWidget {
     return Container(
       width: 38,
       height: 38,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.10), shape: BoxShape.circle),
       child: Icon(icon, size: 18, color: color),
     );
   }
 
-  Future<String?> _showNameFileDialog(
-    BuildContext context,
-    String originalName,
-    FileType type,
-  ) async {
+  Future<String?> _showNameFileDialog(BuildContext context, String originalName, FileType type) async {
+    final c = context.appColors;
     final controller = TextEditingController(text: originalName);
     final formKey = GlobalKey<FormState>();
 
@@ -345,17 +276,11 @@ class _AddFileFab extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        ),
-        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
+        backgroundColor: c.surface,
         title: Text(
           'Name Portfolio Item',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-            fontSize: 16,
-          ),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, color: c.textPrimary, fontSize: 16),
         ),
         content: Form(
           key: formKey,
@@ -365,31 +290,21 @@ class _AddFileFab extends StatelessWidget {
             children: [
               Text(
                 'Give your file a custom title to display in your portfolio.',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
+                style: GoogleFonts.poppins(fontSize: 12, color: c.textSecondary),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: controller,
                 validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Title is required';
-                  }
-                  if (val.trim().length > 80) {
-                    return 'Title must be under 80 characters';
-                  }
+                  if (val == null || val.trim().isEmpty) return 'Title is required';
+                  if (val.trim().length > 80) return 'Title must be under 80 characters';
                   return null;
                 },
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, color: c.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Enter title',
                   filled: true,
-                  fillColor: AppColors.primary.withValues(alpha: 0.05),
+                  fillColor: c.primary.withValues(alpha: 0.05),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -397,7 +312,7 @@ class _AddFileFab extends StatelessWidget {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                    borderSide: BorderSide(color: c.primary, width: 1.5),
                   ),
                 ),
               ),
@@ -406,14 +321,11 @@ class _AddFileFab extends StatelessWidget {
         ),
         actions: [
           TextButton(
-             onPressed: () => Navigator.pop(ctx, null),
-             child: Text(
-               'Cancel',
-               style: GoogleFonts.poppins(
-                 fontWeight: FontWeight.w600,
-                 color: AppColors.textSecondary,
-               ),
-             ),
+            onPressed: () => Navigator.pop(ctx, null),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: c.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -423,10 +335,7 @@ class _AddFileFab extends StatelessWidget {
             },
             child: Text(
               'Add File',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: c.primary),
             ),
           ),
         ],
@@ -434,11 +343,9 @@ class _AddFileFab extends StatelessWidget {
     );
   }
 
-  SnackBar _snackBar(String msg, {required bool isError}) => SnackBar(
+  SnackBar _snackBar(String msg, {required bool isError, required Color successColor}) => SnackBar(
     content: Text(msg),
-    backgroundColor: isError
-        ? const Color.fromARGB(255, 205, 36, 36)
-        : AppColors.success,
+    backgroundColor: isError ? const Color.fromARGB(255, 205, 36, 36) : successColor,
     behavior: SnackBarBehavior.floating,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     margin: const EdgeInsets.all(16),

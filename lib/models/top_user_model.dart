@@ -26,8 +26,9 @@ class TopUserSkill {
 class TopUserModel {
   final int userId;
   final String name;
+  final String username;
   final String profilePicture;
-  final int trustScore;
+  final double trustScore;
   final double averageRating;
   final int totalSwaps;
   final TopUserSkill? skill;
@@ -35,6 +36,7 @@ class TopUserModel {
   const TopUserModel({
     required this.userId,
     required this.name,
+    this.username = '',
     required this.profilePicture,
     required this.trustScore,
     required this.averageRating,
@@ -65,8 +67,9 @@ class TopUserModel {
     return TopUserModel(
       userId: int.tryParse(json['user_id']?.toString() ?? '') ?? int.tryParse(json['id']?.toString() ?? '') ?? 0,
       name: json['name']?.toString() ?? '',
+      username: json['username']?.toString() ?? '',
       profilePicture: resolvedPic,
-      trustScore: int.tryParse(json['trust_score']?.toString() ?? '') ?? 0,
+      trustScore: double.tryParse(json['trust_score']?.toString() ?? '') ?? 0.0,
       averageRating: double.tryParse(json['average_rating']?.toString() ?? '') ?? 0.0,
       totalSwaps: int.tryParse(json['total_swaps']?.toString() ?? '') ?? 0,
       skill: json['skill'] != null && json['skill'] is Map

@@ -6,9 +6,10 @@ import 'package:provider/provider.dart';
 import 'package:skillswap/models/category_model.dart';
 import 'package:skillswap/models/search_result_model.dart';
 import 'package:skillswap/services/skill_service.dart';
-import 'package:skillswap/services/chat_service.dart';
 import 'package:skillswap/screens/chat_messages_screen.dart';
 import 'package:skillswap/providers/profile_provider.dart';
+import 'package:skillswap/providers/chat_provider.dart';
+import 'package:skillswap/providers/swap_request_provider.dart';
 import 'package:skillswap/theme/app_theme.dart';
 
 class AdvancedSearchScreen extends StatefulWidget {
@@ -20,7 +21,6 @@ class AdvancedSearchScreen extends StatefulWidget {
 
 class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   final SkillService _skillService = SkillService();
-  final ChatService _chatService = ChatService();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -184,15 +184,31 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
   }
 
   Future<void> _contactUser(SearchResultModel result) async {
+    final swapRequestProvider = context.read<SwapRequestProvider>();
+    final acceptedRequest = swapRequestProvider.getAcceptedRequestWithUser(result.userId);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    if (acceptedRequest == null) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: const Text('Chatting is only allowed once a Swap Request has been accepted.'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isInitiatingChat = true;
       _chattingUserId = result.userId;
     });
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final chatProvider = context.read<ChatProvider>();
     final navigator = Navigator.of(context);
 
     try {
-      final conversation = await _chatService.getOrCreateConversation(result.userId);
+      final conversation = await chatProvider.getOrCreateAndOpenConversation(result.userId, acceptedRequest.id);
       if (!mounted) return;
       setState(() {
         _isInitiatingChat = false;
@@ -212,10 +228,10 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
       });
       scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text('Failed to open chat: $e'),
+          content: Text('Failed to open chat: ${e.toString().replaceAll('Exception: ', '')}'),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),
         ),
       );
     }
@@ -348,60 +364,24 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
               itemCount: _categories.length + 1,
               itemBuilder: (context, index) {
                 if (index == 0) {
-                  final isSelected = _selectedCategoryId == null;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text('All Categories', style: GoogleFonts.poppins(fontSize: 12)),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() => _selectedCategoryId = null);
-                          _performSearch(page: 1);
-                        }
-                      },
-                      selectedColor: AppColors.primaryLight,
-                      backgroundColor: AppColors.surface,
-                      labelStyle: TextStyle(
-                        color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                        side: BorderSide(
-                          color: isSelected ? AppColors.primary : AppColors.border.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  );
-                }
-
-                final category = _categories[index - 1];
-                final isSelected = _selectedCategoryId == category.id;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(category.name, style: GoogleFonts.poppins(fontSize: 12)),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategoryId = selected ? category.id : null;
-                      });
+                  return _buildCategoryChip(
+                    label: 'All Categories',
+                    isSelected: _selectedCategoryId == null,
+                    onSelected: (_) {
+                      setState(() => _selectedCategoryId = null);
                       _performSearch(page: 1);
                     },
-                    selectedColor: AppColors.primaryLight,
-                    backgroundColor: AppColors.surface,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                      side: BorderSide(
-                        color: isSelected ? AppColors.primary : AppColors.border.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
+                  );
+                }
+                final category = _categories[index - 1];
+                final isSelected = _selectedCategoryId == category.id;
+                return _buildCategoryChip(
+                  label: category.name,
+                  isSelected: isSelected,
+                  onSelected: (selected) {
+                    setState(() => _selectedCategoryId = selected ? category.id : null);
+                    _performSearch(page: 1);
+                  },
                 );
               },
             ),
@@ -409,6 +389,33 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
         const SizedBox(height: 8),
         const Divider(color: AppColors.divider, height: 1),
       ],
+    );
+  }
+
+  Widget _buildCategoryChip({
+    required String label,
+    required bool isSelected,
+    required void Function(bool) onSelected,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label, style: GoogleFonts.poppins(fontSize: 12)),
+        selected: isSelected,
+        onSelected: onSelected,
+        selectedColor: AppColors.primaryLight,
+        backgroundColor: AppColors.surface,
+        labelStyle: TextStyle(
+          color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          side: BorderSide(
+            color: isSelected ? AppColors.primary : AppColors.border.withValues(alpha: 0.5),
+          ),
+        ),
+      ),
     );
   }
 
@@ -671,7 +678,7 @@ class _AdvancedSearchScreenState extends State<AdvancedSearchScreen> {
                                         const Icon(LucideIcons.shieldCheck, color: AppColors.success, size: 12),
                                         const SizedBox(width: 4),
                                         Text(
-                                          'Trust: ${result.trustScore}',
+                                          'Trust: ${result.trustScore % 1 == 0 ? result.trustScore.toInt().toString() : result.trustScore.toStringAsFixed(2)}',
                                           style: AppTextStyles.labelSmall.copyWith(
                                             color: AppColors.success,
                                             fontWeight: FontWeight.w600,

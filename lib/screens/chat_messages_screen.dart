@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:skillswap/models/conversation_model.dart';
 import 'package:skillswap/models/message_model.dart';
+import 'package:skillswap/providers/chat_provider.dart';
 import 'package:skillswap/services/chat_service.dart';
 import 'package:skillswap/theme/app_theme.dart';
 import 'package:skillswap/widgets/message_bubble.dart';
 import 'package:skillswap/widgets/chat_input_field.dart';
+import 'package:skillswap/screens/profile_view_screen.dart';
 
 class ChatMessagesScreen extends StatefulWidget {
   final ConversationModel conversation;
@@ -21,16 +24,21 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<MessageModel> _messages = [];
+  List<Widget> _displayItems = [];
   bool _isLoading = true;
   bool _isSending = false;
   String? _error;
 
-  // Poll for new messages every 5 seconds
   Timer? _pollTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ChatProvider>().markConversationRead(widget.conversation.id);
+      }
+    });
     _loadMessages();
     _pollTimer = Timer.periodic(
       const Duration(seconds: 5),
@@ -45,6 +53,27 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
     super.dispose();
   }
 
+  void _updateDisplayItems() {
+    final items = <Widget>[];
+    DateTime? lastDate;
+
+    for (final msg in _messages) {
+      final msgDate = DateTime(msg.sentAt.year, msg.sentAt.month, msg.sentAt.day);
+      if (lastDate == null || msgDate != lastDate) {
+        items.add(DateSeparator(date: msg.sentAt));
+        lastDate = msgDate;
+      }
+      items.add(
+        MessageBubble(
+          key: ValueKey(msg.id),
+          message: msg,
+          onLongPress: msg.isFromMe ? () => _deleteMessage(msg) : null,
+        ),
+      );
+    }
+    _displayItems = items;
+  }
+
   Future<void> _loadMessages() async {
     setState(() {
       _isLoading = true;
@@ -55,6 +84,7 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
       if (!mounted) return;
       setState(() {
         _messages = msgs;
+        _updateDisplayItems();
         _isLoading = false;
       });
       _scrollToBottom(animated: false);
@@ -67,15 +97,22 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
     }
   }
 
-  /// Silent background poll — no loading spinner
   Future<void> _pollMessages() async {
     if (!mounted) return;
+    if (_isSending || _messages.any((m) => m.id < 0)) return;
     try {
       final msgs = await _chatService.fetchMessages(widget.conversation.id);
       if (!mounted) return;
+      if (_isSending || _messages.any((m) => m.id < 0)) return;
       if (msgs.length != _messages.length) {
-        setState(() => _messages = msgs);
+        setState(() {
+          _messages = msgs;
+          _updateDisplayItems();
+        });
         _scrollToBottom();
+        if (mounted) {
+          context.read<ChatProvider>().markConversationRead(widget.conversation.id);
+        }
       }
     } catch (_) {}
   }
@@ -83,9 +120,8 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
-    // Optimistic insert
     final optimistic = MessageModel(
-      id: -DateTime.now().millisecondsSinceEpoch, // temp id
+      id: -DateTime.now().millisecondsSinceEpoch,
       conversationId: widget.conversation.id,
       body: text,
       isFromMe: true,
@@ -93,6 +129,7 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
     );
     setState(() {
       _messages = [..._messages, optimistic];
+      _updateDisplayItems();
       _isSending = true;
     });
     _scrollToBottom();
@@ -104,22 +141,27 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _messages = _messages
-            .map((m) => m.id == optimistic.id ? sent : m)
-            .toList();
+        final index = _messages.indexWhere((m) => m.id == optimistic.id);
+        if (index != -1) {
+          _messages[index] = sent;
+        } else {
+          _messages.add(sent);
+        }
+        _updateDisplayItems();
         _isSending = false;
       });
+      context.read<ChatProvider>().loadConversations(silent: true);
     } catch (e) {
       if (!mounted) return;
-      // Remove optimistic message on failure
       setState(() {
         _messages = _messages.where((m) => m.id != optimistic.id).toList();
+        _updateDisplayItems();
         _isSending = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Failed to send message. Please try again.'),
-          backgroundColor: AppColors.error,
+          backgroundColor: context.appColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
@@ -131,39 +173,41 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
 
   Future<void> _deleteMessage(MessageModel msg) async {
     if (!msg.isFromMe) return;
+    final c = context.appColors;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        ),
-        backgroundColor: AppColors.surface,
-        title: Text('Delete Message', style: AppTextStyles.headlineMedium),
-        content: Text(
-          'Are you sure you want to delete this message?',
-          style: AppTextStyles.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+      builder: (ctx) {
+        final dc = ctx.appColors;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          ),
+          backgroundColor: dc.surface,
+          title: Text('Delete Message', style: AppTextStyles.headlineMedium),
+          content: Text(
+            'Are you sure you want to delete this message?',
+            style: AppTextStyles.bodyMedium,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'Cancel',
+                style: AppTextStyles.labelMedium.copyWith(color: dc.textSecondary),
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              minimumSize: const Size(90, 40),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dc.error,
+                minimumSize: const Size(90, 40),
+              ),
+              child: const Text('Delete'),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true || !mounted) return;
@@ -173,15 +217,17 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
         messageId: msg.id,
       );
       if (!mounted) return;
-      setState(
-        () => _messages = _messages.where((m) => m.id != msg.id).toList(),
-      );
+      setState(() {
+        _messages = _messages.where((m) => m.id != msg.id).toList();
+        _updateDisplayItems();
+      });
+      context.read<ChatProvider>().loadConversations(silent: true);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Failed to delete message.'),
-          backgroundColor: AppColors.error,
+          backgroundColor: c.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -205,88 +251,97 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final user = widget.conversation.otherUser;
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(user),
+      backgroundColor: c.background,
+      appBar: _buildAppBar(user, c),
       body: Column(
         children: [
-          Expanded(child: _buildBody()),
+          Expanded(child: _buildBody(c)),
           ChatInputField(onSend: _sendMessage, isSending: _isSending),
         ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar(OtherUser user) {
+  PreferredSizeWidget _buildAppBar(OtherUser user, AppColorsExtension c) {
     return AppBar(
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       elevation: 0,
       scrolledUnderElevation: 1,
-      shadowColor: AppColors.divider,
+      shadowColor: c.divider,
       leading: IconButton(
-        icon: const Icon(
+        icon: Icon(
           Icons.arrow_back_ios_new_rounded,
-          color: AppColors.textPrimary,
+          color: c.textPrimary,
           size: 20,
         ),
         onPressed: () => Navigator.pop(context),
       ),
-      title: Row(
-        children: [
-          // Avatar
-          _buildSmallAvatar(user),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.name,
-                  style: AppTextStyles.titleMedium.copyWith(fontSize: 15),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  'Tap for info',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.textHint,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
+      title: GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ProfileViewScreen(),
+            settings: RouteSettings(arguments: user.id),
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            _buildSmallAvatar(user, c),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: AppTextStyles.titleMedium.copyWith(fontSize: 15),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    _isLoading
+                        ? 'Loading messages...'
+                        : '${_messages.length} ${_messages.length == 1 ? 'message' : 'messages'}',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: c.textHint,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         IconButton(
-          icon: const Icon(
-            Icons.more_vert_rounded,
-            color: AppColors.textPrimary,
-            size: 24,
-          ),
-          onPressed: () {
-            // Future: info / block / report
-          },
+          icon: Icon(Icons.more_vert_rounded, color: c.textPrimary, size: 24),
+          onPressed: () {},
         ),
       ],
     );
   }
 
-  Widget _buildSmallAvatar(OtherUser user) {
+  Widget _buildSmallAvatar(OtherUser user, AppColorsExtension c) {
+    final hasAvatar = user.avatarUrl != null && user.avatarUrl!.isNotEmpty;
     return Container(
       width: 38,
       height: 38,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: hasAvatar
+            ? null
+            : LinearGradient(
+                colors: [c.gradientStart, c.gradientEnd],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: hasAvatar ? c.surfaceVariant : null,
       ),
-      child: user.avatarUrl != null
+      child: hasAvatar
           ? ClipOval(
               child: Image.network(
                 user.avatarUrl!,
@@ -294,7 +349,20 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
                 width: 38,
                 height: 38,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _initialsWidget(user),
+                errorBuilder: (_, _, _) {
+                  return Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [c.gradientStart, c.gradientEnd],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: _initialsWidget(user),
+                  );
+                },
               ),
             )
           : _initialsWidget(user),
@@ -313,13 +381,10 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppColorsExtension c) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primary,
-          strokeWidth: 2.5,
-        ),
+      return Center(
+        child: CircularProgressIndicator(color: c.primary, strokeWidth: 2.5),
       );
     }
     if (_error != null) {
@@ -330,7 +395,7 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
             Icon(
               Icons.error_outline_rounded,
               size: 48,
-              color: AppColors.error.withOpacity(0.6),
+              color: c.error.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 12),
             Text('Failed to load messages', style: AppTextStyles.titleMedium),
@@ -353,25 +418,18 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
             Container(
               width: 80,
               height: 80,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                  colors: [c.gradientStart, c.gradientEnd],
                 ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.waving_hand_rounded,
-                size: 36,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.waving_hand_rounded, size: 36, color: Colors.white),
             ),
             const SizedBox(height: 20),
             Text('Say hello!', style: AppTextStyles.headlineMedium),
             const SizedBox(height: 8),
-            Text(
-              'Start the conversation below.',
-              style: AppTextStyles.bodyMedium,
-            ),
+            Text('Start the conversation below.', style: AppTextStyles.bodyMedium),
           ],
         ),
       );
@@ -380,33 +438,8 @@ class _ChatMessagesScreenState extends State<ChatMessagesScreen> {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
-      itemCount: _buildItems().length,
-      itemBuilder: (context, index) => _buildItems()[index],
+      itemCount: _displayItems.length,
+      itemBuilder: (context, index) => _displayItems[index],
     );
-  }
-
-  /// Build a flat list of widgets: DateSeparators + MessageBubbles
-  List<Widget> _buildItems() {
-    final items = <Widget>[];
-    DateTime? lastDate;
-
-    for (final msg in _messages) {
-      final msgDate = DateTime(
-        msg.sentAt.year,
-        msg.sentAt.month,
-        msg.sentAt.day,
-      );
-      if (lastDate == null || msgDate != lastDate) {
-        items.add(DateSeparator(date: msg.sentAt));
-        lastDate = msgDate;
-      }
-      items.add(
-        MessageBubble(
-          message: msg,
-          onLongPress: msg.isFromMe ? () => _deleteMessage(msg) : null,
-        ),
-      );
-    }
-    return items;
   }
 }

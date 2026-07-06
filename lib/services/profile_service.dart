@@ -21,7 +21,15 @@ class ProfileService {
       debugPrint('Response: ${response.body}');
       final data = jsonDecode(response.body);
       final profileJson = data is Map && data.containsKey('data') ? data['data'] : data;
-      return ProfileData.fromJson(profileJson as Map<String, dynamic>);
+      final resultMap = Map<String, dynamic>.from(profileJson as Map);
+      if (data is Map) {
+        for (final key in ['trust_score', 'average_rating', 'total_swaps']) {
+          if (data.containsKey(key) && !resultMap.containsKey(key)) {
+            resultMap[key] = data[key];
+          }
+        }
+      }
+      return ProfileData.fromJson(resultMap);
     } else {
       throw Exception('Failed to fetch profile: ${response.statusCode} ${response.body}');
     }
@@ -38,7 +46,15 @@ class ProfileService {
       debugPrint('Response: ${response.body}');
       final data = jsonDecode(response.body);
       final userJson = data is Map && data.containsKey('user') ? data['user'] : data;
-      return Map<String, dynamic>.from(userJson as Map);
+      final resultMap = Map<String, dynamic>.from(userJson as Map);
+      if (data is Map) {
+        for (final key in ['trust_score', 'average_rating', 'total_swaps']) {
+          if (data.containsKey(key) && !resultMap.containsKey(key)) {
+            resultMap[key] = data[key];
+          }
+        }
+      }
+      return resultMap;
     } else {
       throw Exception('Failed to fetch user profile: ${response.statusCode} ${response.body}');
     }
@@ -59,7 +75,15 @@ class ProfileService {
       debugPrint('Response: ${response.body}');
       final data = jsonDecode(response.body);
       final profileJson = data is Map && data.containsKey('data') ? data['data'] : data;
-      return ProfileData.fromJson(profileJson as Map<String, dynamic>);
+      final resultMap = Map<String, dynamic>.from(profileJson as Map);
+      if (data is Map) {
+        for (final key in ['trust_score', 'average_rating', 'total_swaps']) {
+          if (data.containsKey(key) && !resultMap.containsKey(key)) {
+            resultMap[key] = data[key];
+          }
+        }
+      }
+      return ProfileData.fromJson(resultMap);
     } else {
       throw Exception('Failed to update profile: ${response.statusCode} ${response.body}');
     }

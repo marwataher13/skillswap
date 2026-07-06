@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -30,29 +32,36 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: _buildAppBar(),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Account Management ──
-            _buildSectionLabel('ACCOUNT MANAGEMENT'),
+            _buildSectionLabel(context, 'ACCOUNT MANAGEMENT'),
             const SizedBox(height: 10),
             _buildSectionCard(context, _accountItems),
 
             const SizedBox(height: 28),
 
             // ── Privacy & Security ──
-            _buildSectionLabel('PRIVACY & SECURITY'),
+            _buildSectionLabel(context, 'PRIVACY & SECURITY'),
             const SizedBox(height: 10),
             _buildSectionCard(context, _privacyItems),
 
             const SizedBox(height: 28),
 
+            // ── Appearance ──
+            _buildSectionLabel(context, 'APPEARANCE'),
+            const SizedBox(height: 10),
+            _buildAppearanceCard(context),
+
+            const SizedBox(height: 28),
+
             // ── App & Support ──
-            _buildSectionLabel('APP & SUPPORT'),
+            _buildSectionLabel(context, 'APP & SUPPORT'),
             const SizedBox(height: 10),
             _buildSupportCard(context),
 
@@ -65,9 +74,10 @@ class SettingsScreen extends StatelessWidget {
 
   // ── AppBar ────────────────────────────────────────────────────────────────
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       elevation: 0,
       centerTitle: true,
       automaticallyImplyLeading: false,
@@ -76,7 +86,7 @@ class SettingsScreen extends StatelessWidget {
         style: GoogleFonts.poppins(
           fontSize: 18,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: cs.onSurface,
         ),
       ),
     );
@@ -84,13 +94,13 @@ class SettingsScreen extends StatelessWidget {
 
   // ── Section label ─────────────────────────────────────────────────────────
 
-  Widget _buildSectionLabel(String title) {
+  Widget _buildSectionLabel(BuildContext context, String title) {
     return Text(
       title,
       style: GoogleFonts.poppins(
         fontSize: 11,
         fontWeight: FontWeight.w600,
-        color: AppColors.primary,
+        color: Theme.of(context).colorScheme.primary,
         letterSpacing: 1.1,
       ),
     );
@@ -99,9 +109,10 @@ class SettingsScreen extends StatelessWidget {
   // ── Generic section card ──────────────────────────────────────────────────
 
   Widget _buildSectionCard(BuildContext context, List<_SettingsItem> items) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: AppShadows.card,
       ),
@@ -115,9 +126,7 @@ class SettingsScreen extends StatelessWidget {
                 context,
                 icon: item.icon,
                 label: item.label,
-                onTap: () {
-                  Navigator.pushNamed(context, item.route);
-                },
+                onTap: () => Navigator.pushNamed(context, item.route),
               ),
               if (!isLast)
                 Divider(
@@ -125,7 +134,7 @@ class SettingsScreen extends StatelessWidget {
                   thickness: 1,
                   indent: 56,
                   endIndent: 0,
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: cs.primary.withValues(alpha: 0.08),
                 ),
             ],
           );
@@ -134,41 +143,84 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  // ── Appearance card (dark mode toggle) ───────────────────────────────────
+
+  Widget _buildAppearanceCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        boxShadow: AppShadows.card,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: cs.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(LucideIcons.moon, size: 18, color: cs.primary),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                'Dark Mode',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
+            ),
+            Switch(
+              value: isDark,
+              onChanged: (_) => context.read<ThemeProvider>().toggle(),
+              activeThumbColor: cs.primary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Support card (About + Log Out) ────────────────────────────────────────
 
   Widget _buildSupportCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: AppShadows.card,
       ),
       child: Column(
         children: [
-          // About SkillSwap
           _buildTile(
             context,
             icon: LucideIcons.info,
             label: 'About SkillSwap',
             onTap: () => _showComingSoonSnackBar(context, 'About SkillSwap'),
           ),
-
           Divider(
             height: 1,
             thickness: 1,
             indent: 56,
             endIndent: 0,
-            color: AppColors.primary.withValues(alpha: 0.08),
+            color: cs.primary.withValues(alpha: 0.08),
           ),
-
-          // Log Out — red accent
           _buildTile(
             context,
             icon: LucideIcons.logOut,
             label: 'Log Out',
-            labelColor: AppColors.error,
-            iconColor: AppColors.error,
-            iconBgColor: AppColors.error.withValues(alpha: 0.08),
+            labelColor: cs.error,
+            iconColor: cs.error,
+            iconBgColor: cs.error.withValues(alpha: 0.08),
             showChevron: false,
             onTap: () => _showLogoutDialog(context),
           ),
@@ -189,9 +241,9 @@ class SettingsScreen extends StatelessWidget {
     Color? iconBgColor,
     bool showChevron = true,
   }) {
-    final resolvedIconColor = iconColor ?? AppColors.primary;
-    final resolvedIconBg =
-        iconBgColor ?? AppColors.primary.withValues(alpha: 0.08);
+    final cs = Theme.of(context).colorScheme;
+    final resolvedIconColor = iconColor ?? cs.primary;
+    final resolvedIconBg = iconBgColor ?? cs.primary.withValues(alpha: 0.08);
 
     return InkWell(
       onTap: onTap,
@@ -200,7 +252,6 @@ class SettingsScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
-            // Icon circle
             Container(
               width: 38,
               height: 38,
@@ -211,25 +262,21 @@ class SettingsScreen extends StatelessWidget {
               child: Icon(icon, size: 18, color: resolvedIconColor),
             ),
             const SizedBox(width: 14),
-
-            // Label
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: labelColor ?? AppColors.textPrimary,
+                  color: labelColor ?? cs.onSurface,
                 ),
               ),
             ),
-
-            // Chevron
             if (showChevron)
               Icon(
                 Icons.chevron_right,
                 size: 20,
-                color: AppColors.textSecondary.withValues(alpha: 0.6),
+                color: cs.onSurfaceVariant.withValues(alpha: 0.6),
               ),
           ],
         ),
@@ -242,57 +289,60 @@ class SettingsScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        ),
-        backgroundColor: AppColors.surface,
-        title: Text(
-          'Log Out',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           ),
-        ),
-        content: Text(
-          'Are you sure you want to log out?',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
+          backgroundColor: cs.surface,
+          title: Text(
+            'Log Out',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
             ),
           ),
-           TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await AuthService.clearToken();
-              if (!context.mounted) return;
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/login',
-                (_) => false,
-              );
-            },
-            child: Text(
-              'Log Out',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: AppColors.error,
-              ),
+          content: Text(
+            'Are you sure you want to log out?',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: cs.onSurfaceVariant,
             ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await AuthService.clearToken();
+                if (!context.mounted) return;
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (_) => false,
+                );
+              },
+              child: Text(
+                'Log Out',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: cs.error,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -300,7 +350,7 @@ class SettingsScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$featureName feature coming soon! 🚀'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),

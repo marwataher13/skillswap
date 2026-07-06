@@ -3,50 +3,31 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 
-// ─────────────────────────────────────────────────────────────
-// Field Label
-// ─────────────────────────────────────────────────────────────
 class FieldLabel extends StatelessWidget {
   final String label;
 
-  const FieldLabel(
-    this.label, {
-    super.key,
-  });
+  const FieldLabel(this.label, {super.key});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Padding(
-      padding: const EdgeInsets.only(
-        bottom: 8,
-      ),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         label,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: c.textPrimary),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Custom Text Field
-// ─────────────────────────────────────────────────────────────
 class AppTextField extends StatelessWidget {
   final String hintText;
   final IconData prefixIcon;
-
   final Widget? suffixIcon;
-
   final bool obscureText;
-
   final TextEditingController? controller;
-
   final TextInputType? keyboardType;
-
   final TextInputAction? textInputAction;
 
   const AppTextField({
@@ -62,158 +43,85 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       textInputAction: textInputAction,
-
-      style: GoogleFonts.poppins(
-        fontSize: 14,
-        color: AppColors.textPrimary,
-      ),
-
+      style: GoogleFonts.poppins(fontSize: 14, color: c.textPrimary),
       decoration: InputDecoration(
         hintText: hintText,
-
-        prefixIcon: Icon(
-          prefixIcon,
-          size: 20,
-        ),
-
+        prefixIcon: Icon(prefixIcon, size: 20),
         suffixIcon: suffixIcon,
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Elevated Button
-// ─────────────────────────────────────────────────────────────
 class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
 
-  const PrimaryButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
-  });
+  const PrimaryButton({super.key, required this.label, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
       width: double.infinity,
-
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(
-          AppSpacing.radiusMd,
-        ),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         boxShadow: AppShadows.button,
       ),
-
       child: ElevatedButton(
         onPressed: onPressed,
-
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: c.primary,
           foregroundColor: Colors.white,
-
           elevation: 0,
-
-          padding: const EdgeInsets.symmetric(
-            vertical: 18,
-          ),
-
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              AppSpacing.radiusMd,
-            ),
-          ),
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusMd)),
         ),
-
         child: Text(
           label,
-
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.3,
-            color: AppColors.surface,
-          ),
+          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.3, color: c.surface),
         ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Social Button
-// ─────────────────────────────────────────────────────────────
 class SocialButton extends StatelessWidget {
   final String assetPath;
   final String label;
   final VoidCallback onTap;
 
-  const SocialButton({
-    super.key,
-    required this.assetPath,
-    required this.label,
-    required this.onTap,
-  });
+  const SocialButton({super.key, required this.assetPath, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return InkWell(
-      borderRadius: BorderRadius.circular(
-        AppSpacing.radiusMd,
-      ),
-
+      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       onTap: onTap,
-
       child: Container(
         width: double.infinity,
-
-        padding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 16,
-        ),
-
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-
-          borderRadius: BorderRadius.circular(
-            AppSpacing.radiusMd,
-          ),
-
-          border: Border.all(
-            color: AppColors.border,
-          ),
-
+          color: c.surface,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          border: Border.all(color: c.border),
           boxShadow: AppShadows.subtle,
         ),
-
         child: Row(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
-
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              assetPath,
-              width: 22,
-              height: 22,
-            ),
-
+            Image.asset(assetPath, width: 22, height: 22),
             const SizedBox(width: 12),
-
             Text(
               label,
-
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: c.textPrimary),
             ),
           ],
         ),
@@ -222,143 +130,74 @@ class SocialButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Divider
-// ─────────────────────────────────────────────────────────────
 class AuthDivider extends StatelessWidget {
   final String label;
 
-  const AuthDivider({
-    super.key,
-    this.label = 'Or continue with',
-  });
+  const AuthDivider({super.key, this.label = 'Or continue with'});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Row(
       children: [
-        const Expanded(
-          child: Divider(
-            color: AppColors.divider,
-            thickness: 1,
-          ),
-        ),
-
+        Expanded(child: Divider(color: c.divider, thickness: 1)),
         Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-          ),
-
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             label,
-
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
+            style: GoogleFonts.poppins(fontSize: 13, color: c.textSecondary, fontWeight: FontWeight.w500),
           ),
         ),
-
-        const Expanded(
-          child: Divider(
-            color: AppColors.divider,
-            thickness: 1,
-          ),
-        ),
+        Expanded(child: Divider(color: c.divider, thickness: 1)),
       ],
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Auth Tab Switcher
-// ─────────────────────────────────────────────────────────────
 class AuthTabSwitcher extends StatelessWidget {
   final int selectedIndex;
-
   final Function(int) onTabSelected;
 
-  const AuthTabSwitcher({
-    super.key,
-    required this.selectedIndex,
-    required this.onTabSelected,
-  });
+  const AuthTabSwitcher({super.key, required this.selectedIndex, required this.onTabSelected});
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
       padding: const EdgeInsets.all(4),
-
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-
-        borderRadius: BorderRadius.circular(
-          AppSpacing.radiusFull,
-        ),
+        color: c.surfaceVariant,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
       ),
-
       child: Row(
         children: [
-          _buildTab(
-            title: 'Log In',
-            index: 0,
-          ),
-
-          _buildTab(
-            title: 'Sign Up',
-            index: 1,
-          ),
+          _buildTab(title: 'Log In', index: 0, c: c),
+          _buildTab(title: 'Sign Up', index: 1, c: c),
         ],
       ),
     );
   }
 
-  Widget _buildTab({
-    required String title,
-    required int index,
-  }) {
-    final isSelected =
-        selectedIndex == index;
-
+  Widget _buildTab({required String title, required int index, required AppColorsExtension c}) {
+    final isSelected = selectedIndex == index;
     return Expanded(
       child: GestureDetector(
         onTap: () => onTabSelected(index),
-
         child: AnimatedContainer(
-          duration: const Duration(
-            milliseconds: 250,
-          ),
-
-          padding: const EdgeInsets.symmetric(
-            vertical: 14,
-          ),
-
+          duration: const Duration(milliseconds: 250),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.primary
-                : Colors.transparent,
-
-            borderRadius: BorderRadius.circular(
-              AppSpacing.radiusFull,
-            ),
-
-            boxShadow: isSelected
-                ? AppShadows.button
-                : [],
+            color: isSelected ? c.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+            boxShadow: isSelected ? AppShadows.button : [],
           ),
-
           child: Center(
             child: Text(
               title,
-
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-
-                color: isSelected
-                    ? AppColors.surface
-                    : AppColors.textSecondary,
+                color: isSelected ? c.surface : c.textSecondary,
               ),
             ),
           ),

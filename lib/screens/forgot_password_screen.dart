@@ -20,8 +20,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _showEmailError = false;
   String _emailErrorText = 'Email address is required';
 
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
@@ -37,8 +35,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     _emailController.dispose();
     super.dispose();
   }
-
-  // ── Validation ─────────────────────────────────────────────────────────────
 
   bool _validate() {
     final email = _emailController.text.trim();
@@ -59,8 +55,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return true;
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
-
   Future<void> _onSendCodePressed() async {
     FocusScope.of(context).unfocus();
     if (!_validate()) return;
@@ -70,6 +64,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _isLoading = true;
     });
 
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final successColor = context.appColors.success;
+
     final result = await _passwordService.forgotPassword(
       email: _emailController.text.trim(),
     );
@@ -78,50 +75,41 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     setState(() => _isLoading = false);
 
     if (result.isSuccess) {
-      _showSnackBar('OTP sent to your email! ✉️', isError: false);
+      scaffoldMessenger.showSnackBar(_snackBar('OTP sent to your email! ✉️', isError: false, successColor: successColor));
       Navigator.pushNamed(
         context,
         '/verify-otp',
         arguments: {'email': _emailController.text.trim()},
       );
     } else {
-      _showSnackBar(result.error ?? 'Something went wrong', isError: true);
+      scaffoldMessenger.showSnackBar(_snackBar(result.error ?? 'Something went wrong', isError: true, successColor: successColor));
     }
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  void _showSnackBar(String message, {required bool isError}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError
-            ? const Color.fromARGB(255, 205, 36, 36)
-            : AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  // ── Build ──────────────────────────────────────────────────────────────────
+  SnackBar _snackBar(String message, {required bool isError, required Color successColor}) => SnackBar(
+    content: Text(message),
+    backgroundColor: isError ? const Color.fromARGB(255, 205, 36, 36) : successColor,
+    behavior: SnackBarBehavior.floating,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    margin: const EdgeInsets.all(16),
+  );
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(size),
+            _buildHeader(size, c),
             Transform.translate(
               offset: const Offset(0, -28),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildFormCard(),
+                child: _buildFormCard(c),
               ),
             ),
           ],
@@ -130,17 +118,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  Widget _buildHeader(Size size) {
+  Widget _buildHeader(Size size, AppColorsExtension c) {
     return Container(
       width: double.infinity,
       height: size.height * 0.30,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.gradientStart, AppColors.gradientEnd],
+          colors: [c.gradientStart, c.gradientEnd],
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(AppSpacing.radiusXl),
           bottomRight: Radius.circular(AppSpacing.radiusXl),
         ),
@@ -153,28 +141,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
               ),
               const Spacer(),
               Text(
                 'Forgot Password',
                 style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  letterSpacing: -0.3,
+                  fontSize: 28, fontWeight: FontWeight.w700,
+                  color: Colors.white, letterSpacing: -0.3,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Verify your credentials to reset',
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
+                  fontSize: 13, fontWeight: FontWeight.w400,
                   color: Colors.white.withValues(alpha: 0.85),
                 ),
               ),
@@ -186,62 +167,47 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
-  Widget _buildFormCard() {
+  Widget _buildFormCard(AppColorsExtension c) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Lock icon ──
           Center(
             child: Container(
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
+                color: c.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                LucideIcons.lock,
-                size: 30,
-                color: AppColors.primary,
-              ),
+              child: Icon(LucideIcons.lock, size: 30, color: c.primary),
             ),
           ),
           const SizedBox(height: 16),
-
           Center(
             child: Text(
               'Enter Registered Email',
-              style: GoogleFonts.poppins(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+              style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: c.textPrimary),
             ),
           ),
           const SizedBox(height: 8),
-
           Center(
             child: Text(
               'We will send a 6-digit confirmation OTP to your\nverified email account.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
-                height: 1.5,
+                fontSize: 13, fontWeight: FontWeight.w400,
+                color: c.textSecondary, height: 1.5,
               ),
             ),
           ),
           const SizedBox(height: 24),
-
-          // ── Email field ──
           const FieldLabel('Email Address'),
           const SizedBox(height: 8),
           AppTextField(
@@ -251,29 +217,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
           ),
-
           if (_showEmailError) ...[
             const SizedBox(height: 6),
-            Text(
-              _emailErrorText,
-              style: GoogleFonts.poppins(fontSize: 12, color: AppColors.error),
-            ),
+            Text(_emailErrorText, style: GoogleFonts.poppins(fontSize: 12, color: c.error)),
           ],
-
           const SizedBox(height: 28),
-
-          // ── Button ──
           _isLoading
-              ? const Center(
+              ? Center(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: CircularProgressIndicator(color: c.primary),
                   ),
                 )
-              : PrimaryButton(
-                  label: 'Send Verification Code',
-                  onPressed: _onSendCodePressed,
-                ),
+              : PrimaryButton(label: 'Send Verification Code', onPressed: _onSendCodePressed),
         ],
       ),
     );

@@ -43,26 +43,16 @@ class _ChatInputFieldState extends State<ChatInputField> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors;
     return Container(
-      color: AppColors.surface,
-      padding: EdgeInsets.fromLTRB(
-        16,
-        10,
-        16,
-        MediaQuery.of(context).padding.bottom + 10,
-      ),
+      color: c.surface,
+      padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // ── Text input ──────────────────────────────────────────────────
           Expanded(
-            child: Container(
+            child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 120),
-              decoration: BoxDecoration(
-                color: AppColors.inputFill,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                border: Border.all(color: AppColors.border),
-              ),
               child: TextField(
                 controller: _controller,
                 maxLines: null,
@@ -71,24 +61,27 @@ class _ChatInputFieldState extends State<ChatInputField> {
                 style: AppTextStyles.bodyLarge.copyWith(fontSize: 15),
                 decoration: InputDecoration(
                   hintText: 'Type a message...',
-                  hintStyle: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textHint,
-                    fontSize: 14,
+                  hintStyle: AppTextStyles.bodyMedium.copyWith(color: c.textHint, fontSize: 14),
+                  filled: true,
+                  fillColor: c.inputFill,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                    borderSide: BorderSide(color: c.border),
                   ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 12,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                    borderSide: BorderSide(color: c.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+                    borderSide: BorderSide(color: c.primary, width: 1.5),
                   ),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 10),
-
-          // ── Send button ──────────────────────────────────────────────────
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
@@ -96,15 +89,13 @@ class _ChatInputFieldState extends State<ChatInputField> {
             height: 48,
             decoration: BoxDecoration(
               gradient: _hasText && !widget.isSending
-                  ? const LinearGradient(
-                      colors: [AppColors.gradientStart, AppColors.gradientEnd],
+                  ? LinearGradient(
+                      colors: [c.gradientStart, c.gradientEnd],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: _hasText && !widget.isSending
-                  ? null
-                  : AppColors.surfaceVariant,
+              color: _hasText && !widget.isSending ? null : c.surfaceVariant,
               shape: BoxShape.circle,
               boxShadow: _hasText && !widget.isSending ? AppShadows.button : [],
             ),
@@ -115,18 +106,15 @@ class _ChatInputFieldState extends State<ChatInputField> {
                 onTap: _hasText && !widget.isSending ? _send : null,
                 child: Center(
                   child: widget.isSending
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                            strokeWidth: 2,
-                          ),
+                          child: CircularProgressIndicator(color: c.primary, strokeWidth: 2),
                         )
                       : Icon(
                           Icons.send_rounded,
                           size: 20,
-                          color: _hasText ? Colors.white : AppColors.textHint,
+                          color: _hasText ? Colors.white : c.textHint,
                         ),
                 ),
               ),

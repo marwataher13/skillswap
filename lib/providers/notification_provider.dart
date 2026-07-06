@@ -9,82 +9,89 @@ class NotificationProvider extends ChangeNotifier {
   int _unreadCount = 0;
   bool _isLoading = false;
   String? _error;
+  bool _isFetching = false;
 
-  NotificationProvider() {
-    // Automatically load data on startup/provider registration
-    loadData();
-  }
+  // NOTE: loadData() is called explicitly after login, not here in the
+  // constructor, because no auth token exists yet at provider-creation time.
+  NotificationProvider();
 
   // ── Getters ───────────────────────────────────────────────────────────────
-  List<NotificationModel> get notifications => List.unmodifiable(_notifications);
+
+  List<NotificationModel> get notifications =>
+      List.unmodifiable(_notifications);
   int get unreadCount => _unreadCount;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // ── Private helpers ────────────────────────────────────────────────────────
+
+  /// Fetches notifications and unread count in parallel and updates state.
+  /// Throws on error so callers can handle optimistic rollback.
+  Future<void> _fetchAll() async {
+    final results = await Future.wait([
+      _notificationService.fetchNotifications(),
+      _notificationService.fetchUnreadCount(),
+    ]);
+    _notifications = results[0] as List<NotificationModel>;
+    _unreadCount = results[1] as int;
+    _error = null;
+  }
+
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  /// Fetches the full notifications list and the current unread count.
+  /// Full load with loading indicator — use on screen entry.
   Future<void> loadData() async {
+    if (_isFetching) return;
+    _isFetching = true;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final results = await Future.wait([
-        _notificationService.fetchNotifications(),
-        _notificationService.fetchUnreadCount(),
-      ]);
-
-      _notifications = results[0] as List<NotificationModel>;
-      _unreadCount = results[1] as int;
-      _error = null;
+      await _fetchAll();
     } catch (e) {
       _error = e.toString();
       debugPrint('NotificationProvider.loadData error: $e');
     } finally {
       _isLoading = false;
+      _isFetching = false;
       notifyListeners();
     }
   }
 
-  /// Refreshes data without showing a full-screen loading spinner (subtle update)
+  /// Silent refresh without a loading indicator — use for background updates.
   Future<void> refreshData() async {
+    if (_isFetching) return;
+    _isFetching = true;
     _error = null;
     try {
-      final results = await Future.wait([
-        _notificationService.fetchNotifications(),
-        _notificationService.fetchUnreadCount(),
-      ]);
-
-      _notifications = results[0] as List<NotificationModel>;
-      _unreadCount = results[1] as int;
-      _error = null;
+      await _fetchAll();
     } catch (e) {
       debugPrint('NotificationProvider.refreshData error: $e');
     } finally {
+      _isFetching = false;
       notifyListeners();
     }
   }
 
-  /// Mark all notifications as read.
+  /// Lightweight count-only refresh — used for home-screen badge.
+  Future<void> refreshUnreadCount() async {
+    try {
+      _unreadCount = await _notificationService.fetchUnreadCount();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('NotificationProvider.refreshUnreadCount error: $e');
+    }
+  }
+
+  /// Optimistically marks all notifications as read, rolling back on failure.
   Future<void> markAllAsRead() async {
-    // Optimistic Update
     final oldNotifications = List<NotificationModel>.from(_notifications);
     final oldUnreadCount = _unreadCount;
 
-    _notifications = _notifications.map((item) {
-      if (!item.read) {
-        return NotificationModel(
-          id: item.id,
-          title: item.title,
-          message: item.message,
-          type: item.type,
-          read: true,
-          createdAt: item.createdAt,
-        );
-      }
-      return item;
-    }).toList();
+    _notifications = _notifications
+        .map((n) => n.read ? n : n.copyWith(read: true))
+        .toList();
     _unreadCount = 0;
     notifyListeners();
 
@@ -92,7 +99,6 @@ class NotificationProvider extends ChangeNotifier {
       await _notificationService.markAllRead();
     } catch (e) {
       debugPrint('NotificationProvider.markAllAsRead error: $e');
-      // Rollback on failure
       _notifications = oldNotifications;
       _unreadCount = oldUnreadCount;
       notifyListeners();
@@ -100,25 +106,15 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Mark a specific notification as read.
+  /// Optimistically marks a single notification as read, rolling back on failure.
   Future<void> markAsRead(String id) async {
-    final index = _notifications.indexWhere((item) => item.id == id);
+    final index = _notifications.indexWhere((n) => n.id == id);
     if (index == -1 || _notifications[index].read) return;
 
-    // Optimistic Update
     final oldNotifications = List<NotificationModel>.from(_notifications);
     final oldUnreadCount = _unreadCount;
 
-    final updatedItem = NotificationModel(
-      id: _notifications[index].id,
-      title: _notifications[index].title,
-      message: _notifications[index].message,
-      type: _notifications[index].type,
-      read: true,
-      createdAt: _notifications[index].createdAt,
-    );
-
-    _notifications[index] = updatedItem;
+    _notifications[index] = _notifications[index].copyWith(read: true);
     if (_unreadCount > 0) _unreadCount--;
     notifyListeners();
 
@@ -126,7 +122,6 @@ class NotificationProvider extends ChangeNotifier {
       await _notificationService.markAsRead(id);
     } catch (e) {
       debugPrint('NotificationProvider.markAsRead error: $e');
-      // Rollback on failure
       _notifications = oldNotifications;
       _unreadCount = oldUnreadCount;
       notifyListeners();
@@ -134,28 +129,23 @@ class NotificationProvider extends ChangeNotifier {
     }
   }
 
-  /// Delete a notification.
+  /// Optimistically deletes a notification, rolling back on failure.
   Future<void> deleteNotification(String id) async {
-    final index = _notifications.indexWhere((item) => item.id == id);
+    final index = _notifications.indexWhere((n) => n.id == id);
     if (index == -1) return;
 
     final itemToDelete = _notifications[index];
-
-    // Optimistic Update
     final oldNotifications = List<NotificationModel>.from(_notifications);
     final oldUnreadCount = _unreadCount;
 
     _notifications.removeAt(index);
-    if (!itemToDelete.read && _unreadCount > 0) {
-      _unreadCount--;
-    }
+    if (!itemToDelete.read && _unreadCount > 0) _unreadCount--;
     notifyListeners();
 
     try {
       await _notificationService.deleteNotification(id);
     } catch (e) {
       debugPrint('NotificationProvider.deleteNotification error: $e');
-      // Rollback on failure
       _notifications = oldNotifications;
       _unreadCount = oldUnreadCount;
       notifyListeners();

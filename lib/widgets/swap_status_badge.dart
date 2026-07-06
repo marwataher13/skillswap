@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
- 
+
 class SwapStatusBadge extends StatelessWidget {
   final String status;
- 
+
   const SwapStatusBadge({super.key, required this.status});
- 
+
   @override
   Widget build(BuildContext context) {
-    final cfg = _config(status);
+    final c = context.appColors;
+    final cfg = _config(status, c);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -33,47 +34,47 @@ class SwapStatusBadge extends StatelessWidget {
       ),
     );
   }
- 
-  _BadgeConfig _config(String status) {
+
+  _BadgeConfig _config(String status, AppColorsExtension c) {
     switch (status.toLowerCase()) {
       case 'accepted':
-        return _BadgeConfig(
+        return const _BadgeConfig(
           label: 'Accepted',
           icon: Icons.check_circle_rounded,
-          fg: const Color(0xFF16A34A),
-          bg: const Color(0xFFDCFCE7),
+          fg: Color(0xFF16A34A),
+          bg: Color(0xFFDCFCE7),
         );
       case 'rejected':
         return _BadgeConfig(
           label: 'Rejected',
           icon: Icons.cancel_rounded,
-          fg: AppColors.error,
-          bg: AppColors.error.withValues(alpha: 0.1),
+          fg: c.error,
+          bg: c.error.withValues(alpha: 0.1),
         );
       case 'cancelled':
         return _BadgeConfig(
           label: 'Cancelled',
           icon: Icons.remove_circle_rounded,
-          fg: AppColors.textSecondary,
-          bg: AppColors.surfaceVariant,
+          fg: c.textSecondary,
+          bg: c.surfaceVariant,
         );
-      default: // pending
-        return _BadgeConfig(
+      default:
+        return const _BadgeConfig(
           label: 'Pending',
           icon: Icons.access_time_rounded,
-          fg: const Color(0xFFD97706),
-          bg: const Color(0xFFFEF3C7),
+          fg: Color(0xFFD97706),
+          bg: Color(0xFFFEF3C7),
         );
     }
   }
 }
- 
+
 class _BadgeConfig {
   final String label;
   final IconData icon;
   final Color fg;
   final Color bg;
- 
+
   const _BadgeConfig({
     required this.label,
     required this.icon,
