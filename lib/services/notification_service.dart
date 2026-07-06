@@ -13,7 +13,7 @@ class NotificationService {
     final url = Uri.parse('$_baseUrl/api/notifications');
     final headers = await AuthService.getAuthHeaders();
 
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     debugPrint('NotificationService: fetchNotifications status = ${response.statusCode}');
 
@@ -72,7 +72,7 @@ class NotificationService {
     final url = Uri.parse('$_baseUrl/api/notifications/unread-count');
     final headers = await AuthService.getAuthHeaders();
 
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     debugPrint('NotificationService: fetchUnreadCount status = ${response.statusCode}');
     if (response.statusCode == 200) {
@@ -111,7 +111,7 @@ class NotificationService {
     final url = Uri.parse('$_baseUrl/api/notifications/mark-all-read');
     final headers = await AuthService.getAuthHeaders();
 
-    final response = await http.post(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.post(url, headers: headers).timeout(const Duration(seconds: 300));
 
     debugPrint('NotificationService: markAllRead status = ${response.statusCode}');
     if (response.statusCode != 200 && response.statusCode != 204 && response.statusCode != 201) {
@@ -124,7 +124,7 @@ class NotificationService {
     final url = Uri.parse('$_baseUrl/api/notifications/$id/read');
     final headers = await AuthService.getAuthHeaders();
 
-    final response = await http.put(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.put(url, headers: headers).timeout(const Duration(seconds: 300));
 
     debugPrint('NotificationService: markAsRead status = ${response.statusCode}');
     if (response.statusCode != 200 && response.statusCode != 204) {
@@ -137,7 +137,7 @@ class NotificationService {
     final url = Uri.parse('$_baseUrl/api/notifications/$id');
     final headers = await AuthService.getAuthHeaders();
 
-    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 300));
 
     debugPrint('NotificationService: deleteNotification status = ${response.statusCode}');
     if (response.statusCode != 200 && response.statusCode != 204) {

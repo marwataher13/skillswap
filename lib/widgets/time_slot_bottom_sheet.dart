@@ -91,9 +91,10 @@ class _TimeSlotBottomSheetState extends State<TimeSlotBottomSheet> {
       );
     } catch (e) {
       if (!mounted) return;
+      final cleanMsg = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Failed to save. Please try again.'),
+          content: Text(cleanMsg.isNotEmpty ? cleanMsg : 'Failed to save. Please try again.'),
           backgroundColor: errorColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSpacing.radiusSm)),

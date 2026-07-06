@@ -103,13 +103,19 @@ class _ChatListScreenState extends State<ChatListScreen>
           Expanded(
             child: Text('Chats', textAlign: TextAlign.center, style: AppTextStyles.headlineMedium),
           ),
+
+          // New conversation icon (placeholder; wire to a user-search flow)
           IconButton(
-            icon: Icon(Icons.edit_square, color: c.textPrimary, size: 24),
+            icon: const Icon(
+              Icons.edit_square,
+              color: AppColors.textPrimary,
+              size: 24,
+            ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Start new conversation coming soon!'),
-                  backgroundColor: c.primary,
+                  backgroundColor: AppColors.primary,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppSpacing.radiusSm),

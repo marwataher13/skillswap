@@ -5,11 +5,13 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:skillswap/models/category_model.dart';
 import 'package:skillswap/models/search_result_model.dart';
+import 'package:skillswap/models/recommendation_model.dart';
 import 'package:skillswap/providers/profile_provider.dart';
 import 'package:skillswap/providers/notification_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/home_search_bar.dart';
 import '../widgets/category_list.dart';
+import '../widgets/ai_assistant_fab.dart';
 // ignore: unused_import
 import '../widgets/time_slot_section.dart';
 import '../services/skill_service.dart';
@@ -28,14 +30,18 @@ class _HomeScreenState extends State<HomeScreen> {
   List<SearchResultModel> _defaultSkills = [];
   List<CategoryModel> _categories = [];
   List<SearchResultModel> _searchResults = [];
+  List<RecommendationModel> _recommendations = [];
 
   bool _isLoadingSkills = true;
   bool _isLoadingCategories = true;
   bool _isSearching = false;
   bool _isInSearchMode = false;
+  bool _isLoadingRecommendations = true;
+
   String? _skillsError;
   String? _categoriesError;
   String? _searchError;
+  String? _recommendationsError;
 
   int _selectedCategoryIndex = 0;
   Timer? _debounce;
@@ -54,74 +60,164 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadInitialData() async {
+    _loadRecommendations();
     await _loadCategories();
     if (_categories.isNotEmpty) {
       await _loadFeaturedFeed();
     }
   }
 
+  Future<void> _loadRecommendations() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingRecommendations = true;
+      _recommendationsError = null;
+    });
+    try {
+      final list = await _skillService.fetchRecommendations();
+      if (mounted) {
+        setState(() {
+          _recommendations = list;
+          _isLoadingRecommendations = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _recommendationsError = e.toString().replaceFirst('Exception: ', '');
+          _isLoadingRecommendations = false;
+        });
+      }
+    }
+  }
+
   Future<void> _loadFeaturedFeed() async {
     if (!mounted) return;
-    setState(() { _isLoadingSkills = true; _skillsError = null; });
+    setState(() {
+      _isLoadingSkills = true;
+      _skillsError = null;
+    });
+
     try {
       final List<SearchResultModel> feed = [];
-      final limit = _categories.length > 3 ? 3 : _categories.length;
-      for (int i = 0; i < limit; i++) {
+      for (int i = 0; i < _categories.length; i++) {
         try {
-          final topUsersResponse = await _skillService.fetchTopUsers(_categories[i].id, page: 1);
+          final topUsersResponse = await _skillService.fetchTopUsers(
+            _categories[i].id,
+            page: 1,
+          );
+          
           for (final tu in topUsersResponse.results) {
             feed.add(SearchResultModel(
-              userId: tu.userId, name: tu.name,
-              profilePicture: tu.profilePicture, trustScore: tu.trustScore,
+              userId: tu.userId,
+              name: tu.name,
+              profilePicture: tu.profilePicture,
+              trustScore: tu.trustScore,
               averageRating: tu.averageRating,
-              skills: tu.skill != null ? [SearchSkillModel(
-                id: tu.skill!.id, name: tu.skill!.name,
-                description: tu.skill!.description, level: tu.skill!.level,
-                type: 'teach', category: _categories[i].name,
-              )] : [],
+              skills: tu.skill != null ? [
+                SearchSkillModel(
+                  id: tu.skill!.id,
+                  name: tu.skill!.name,
+                  description: tu.skill!.description,
+                  level: tu.skill!.level,
+                  type: 'teach',
+                  category: _categories[i].name,
+                )
+              ] : [],
             ));
           }
         } catch (e, s) { debugPrint('Failed loading category feed index $i: $e\n$s'); }
       }
       feed.shuffle();
-      if (mounted) setState(() { _defaultSkills = feed; _isLoadingSkills = false; });
+
+      if (mounted) {
+        setState(() {
+          _defaultSkills = feed;
+          _isLoadingSkills = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() { _skillsError = 'Failed to load feed: $e'; _isLoadingSkills = false; });
+      if (mounted) {
+        setState(() {
+          _skillsError = 'Failed to load feed: $e';
+          _isLoadingSkills = false;
+        });
+      }
     }
   }
 
   Future<void> _loadCategoryFeed(int categoryId, String categoryName) async {
     if (!mounted) return;
-    setState(() { _isLoadingSkills = true; _skillsError = null; });
+    setState(() {
+      _isLoadingSkills = true;
+      _skillsError = null;
+    });
+
     try {
-      final topUsersResponse = await _skillService.fetchTopUsers(categoryId, page: 1);
+      final topUsersResponse = await _skillService.fetchTopUsers(
+        categoryId,
+        page: 1,
+      );
+      
       final List<SearchResultModel> feed = [];
       for (final tu in topUsersResponse.results) {
         feed.add(SearchResultModel(
-          userId: tu.userId, name: tu.name,
-          profilePicture: tu.profilePicture, trustScore: tu.trustScore,
+          userId: tu.userId,
+          name: tu.name,
+          profilePicture: tu.profilePicture,
+          trustScore: tu.trustScore,
           averageRating: tu.averageRating,
-          skills: tu.skill != null ? [SearchSkillModel(
-            id: tu.skill!.id, name: tu.skill!.name,
-            description: tu.skill!.description, level: tu.skill!.level,
-            type: 'teach', category: categoryName,
-          )] : [],
+          skills: tu.skill != null ? [
+            SearchSkillModel(
+              id: tu.skill!.id,
+              name: tu.skill!.name,
+              description: tu.skill!.description,
+              level: tu.skill!.level,
+              type: 'teach',
+              category: categoryName,
+            )
+          ] : [],
         ));
       }
-      if (mounted) setState(() { _defaultSkills = feed; _isLoadingSkills = false; });
+
+      if (mounted) {
+        setState(() {
+          _defaultSkills = feed;
+          _isLoadingSkills = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() { _skillsError = 'Failed to load category feed: $e'; _isLoadingSkills = false; });
+      if (mounted) {
+        setState(() {
+          _skillsError = 'Failed to load category feed: $e';
+          _isLoadingSkills = false;
+        });
+      }
     }
   }
 
   Future<void> _loadCategories() async {
     if (!mounted) return;
-    setState(() { _isLoadingCategories = true; _categoriesError = null; });
+    setState(() {
+      _isLoadingCategories = true;
+      _categoriesError = null;
+    });
+
     try {
       final categories = await _skillService.fetchCategories();
-      if (mounted) setState(() { _categories = categories; _isLoadingCategories = false; });
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+          _isLoadingCategories = false;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() { _categoriesError = e.toString(); _isLoadingCategories = false; });
+      if (mounted) {
+        setState(() {
+          _categoriesError = e.toString();
+          _isLoadingCategories = false;
+        });
+      }
     }
   }
 
@@ -142,13 +238,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _performSearch({required String query, int? categoryId}) async {
     if (!mounted) return;
-    setState(() { _isInSearchMode = true; _isSearching = true; _searchError = null; });
+    setState(() {
+      _isInSearchMode = true;
+      _isSearching = true;
+      _searchError = null;
+    });
+
     try {
-      final response = await _skillService.searchSkills(query: query, categoryId: categoryId);
-      if (mounted) setState(() { _searchResults = response.results; _isSearching = false; });
+      final response = await _skillService.searchSkills(
+        query: query,
+        categoryId: categoryId,
+      );
+      if (mounted) {
+        setState(() {
+          _searchResults = response.results;
+          _isSearching = false;
+        });
+      }
     } catch (e, stack) {
       debugPrint('Search Exception: $e\n$stack');
-      if (mounted) setState(() { _searchError = 'Search failed: $e'; _isSearching = false; });
+      if (mounted) {
+        setState(() {
+          _searchError = 'Search failed: $e';
+          _isSearching = false;
+        });
+      }
     }
   }
 
@@ -160,7 +274,10 @@ class _HomeScreenState extends State<HomeScreen> {
       if (index == 0) {
         _loadFeaturedFeed();
       } else {
-        _loadCategoryFeed(_categories[index - 1].id, _categories[index - 1].name);
+        _loadCategoryFeed(
+          _categories[index - 1].id,
+          _categories[index - 1].name,
+        );
       }
     } else {
       _performSearch(query: query, categoryId: index == 0 ? null : _categories[index - 1].id);
@@ -175,17 +292,27 @@ class _HomeScreenState extends State<HomeScreen> {
         categoryId: _selectedCategoryIndex == 0 ? null : _categories[_selectedCategoryIndex - 1].id,
       );
     } else {
-      await _loadInitialData();
+      await Future.wait([_loadRecommendations(), _loadCategories()]);
+      if (_categories.isNotEmpty) {
+        await _loadFeaturedFeed();
+      }
     }
   }
 
-  List<String> get _categoryLabels => ['All', ..._categories.map((c) => c.name)];
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  List<String> get _categoryLabels => [
+        'All',
+        ..._categories.map((c) => c.name),
+      ];
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors;
     return Scaffold(
-      backgroundColor: c.background,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -205,7 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: HomeSearchBar(
                           controller: _searchController,
                           onChanged: _onSearchChanged,
-                          onFilterPressed: () => Navigator.pushNamed(context, '/search'),
+                          onFilterPressed: () =>
+                              Navigator.pushNamed(context, '/search'),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
@@ -216,7 +344,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text('Categories', style: AppTextStyles.titleMedium),
                             TextButton(
-                              onPressed: () => Navigator.pushNamed(context, '/categories'),
+                              onPressed: () =>
+                                  Navigator.pushNamed(context, '/categories'),
                               child: Text(
                                 'See All',
                                 style: AppTextStyles.labelMedium.copyWith(
@@ -229,18 +358,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
                         child: _buildCategorySection(c),
                       ),
                       const SizedBox(height: AppSpacing.lg),
+
+                      // ── Time Slots (hidden during search) ───────────────
+                      // if (!_isInSearchMode) ...[
+                      //   const TimeSlotSection(),
+                      //   const SizedBox(height: AppSpacing.lg),
+                      // ],
+
+                      // ── Skill section label ─────────────────────────────
                       if (!_isInSearchMode)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, 12),
                           child: Text('Browse Skills', style: AppTextStyles.titleMedium),
                         ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                        child: _isInSearchMode ? _buildSearchResults(c) : _buildDefaultSkills(c),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: _isInSearchMode
+                            ? _buildSearchResults(c)
+                            : _buildDefaultSkills(c),
                       ),
                       const SizedBox(height: AppSpacing.xl),
                     ],
@@ -290,13 +433,20 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_selectedCategoryIndex == 0) {
             _loadFeaturedFeed();
           } else {
-            _loadCategoryFeed(_categories[_selectedCategoryIndex - 1].id, _categories[_selectedCategoryIndex - 1].name);
+            _loadCategoryFeed(
+              _categories[_selectedCategoryIndex - 1].id,
+              _categories[_selectedCategoryIndex - 1].name,
+            );
           }
         },
         c: c,
       );
     }
-    if (_defaultSkills.isEmpty) return _buildEmptyState('No skills found in this feed.', c);
+
+    if (_defaultSkills.isEmpty) {
+      return _buildEmptyState('No skills found in this feed.', c);
+    }
+
     final cards = <Widget>[];
     for (final user in _defaultSkills) {
       for (final skill in user.skills) {
@@ -325,7 +475,10 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
     if (_searchResults.isEmpty) {
-      return _buildEmptyState('No results found for "${_searchController.text}".', c);
+      return _buildEmptyState(
+        'No results found for "${_searchController.text}".',
+        c,
+      );
     }
     final cards = <Widget>[];
     for (final result in _searchResults) {
@@ -341,6 +494,8 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (_, i) => cards[i],
     );
   }
+
+  // ── Shared state widgets ───────────────────────────────────────────────────
 
   Widget _buildLoadingList() {
     return Column(
@@ -401,16 +556,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final parts = profile.name.trim().split(' ');
     final initials = parts.length >= 2
         ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
-        : profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?';
+        : profile.name.isNotEmpty
+            ? profile.name[0].toUpperCase()
+            : '?';
 
     final Widget avatarWidget = CircleAvatar(
       radius: 20,
-      backgroundColor: c.primary,
+      backgroundColor: AppColors.primary,
       foregroundImage: (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
-          ? NetworkImage(profile.avatarUrl!, headers: const {'ngrok-skip-browser-warning': 'true'})
+          ? NetworkImage(
+              profile.avatarUrl!,
+              headers: const {'ngrok-skip-browser-warning': 'true'},
+            )
           : null,
       onForegroundImageError: (profile.avatarUrl != null && profile.avatarUrl!.isNotEmpty)
-          ? (exception, stackTrace) { debugPrint('Failed to load profile image: $exception'); }
+          ? (exception, stackTrace) {
+              debugPrint('Failed to load profile image: $exception');
+            }
           : null,
       child: Text(
         initials,
@@ -455,8 +617,14 @@ class _HomeScreenState extends State<HomeScreen> {
               top: -2,
               child: Container(
                 padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(color: c.error, shape: BoxShape.circle),
-                constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                decoration: const BoxDecoration(
+                  color: AppColors.error,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 14,
+                  minHeight: 14,
+                ),
                 child: Center(
                   child: Text(
                     unreadCount > 9 ? '9+' : '$unreadCount',
@@ -495,8 +663,10 @@ class _SearchSkillCard extends StatelessWidget {
                 ? Image.network(
                     result.profilePicture,
                     headers: const {'ngrok-skip-browser-warning': 'true'},
-                    height: 180, width: double.infinity, fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => _placeholder(c),
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _placeholder(c),
                   )
                 : _placeholder(c),
           ),
@@ -535,14 +705,27 @@ class _SearchSkillCard extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/skill-details', arguments: {'result': result, 'skill': skill});
+                        Navigator.pushNamed(
+                          context,
+                          '/skill-details',
+                          arguments: {
+                            'result': result,
+                            'skill': skill,
+                          },
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: c.primaryLight,
                         minimumSize: const Size(100, 36),
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                       ),
-                      child: Text('View Details', style: TextStyle(fontSize: 12, color: c.textPrimary)),
+                      child: const Text(
+                        'View Details',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -556,9 +739,10 @@ class _SearchSkillCard extends StatelessWidget {
 
   Widget _placeholder(AppColorsExtension c) {
     return Container(
-      height: 180, width: double.infinity,
-      color: c.surfaceVariant,
-      child: Icon(LucideIcons.user, size: 48, color: c.textHint),
+      height: 180,
+      width: double.infinity,
+      color: AppColors.surfaceVariant,
+      child: const Icon(LucideIcons.user, size: 48, color: AppColors.textHint),
     );
   }
 }
@@ -579,7 +763,10 @@ class _LevelBadge extends StatelessWidget {
       ),
       child: Text(
         level,
-        style: AppTextStyles.labelSmall.copyWith(color: c.mochaBean, fontWeight: FontWeight.w600),
+        style: AppTextStyles.labelSmall.copyWith(
+          color: AppColors.mochaBean,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -611,7 +798,10 @@ class _ShimmerCardState extends State<_ShimmerCard> with SingleTickerProviderSta
       opacity: _animation,
       child: Container(
         height: 260,
-        decoration: BoxDecoration(color: c.surfaceVariant, borderRadius: BorderRadius.circular(AppSpacing.radiusLg)),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        ),
       ),
     );
   }
@@ -642,8 +832,12 @@ class _ShimmerChipState extends State<_ShimmerChip> with SingleTickerProviderSta
     return FadeTransition(
       opacity: _animation,
       child: Container(
-        width: 90, height: 45,
-        decoration: BoxDecoration(color: c.surfaceVariant, borderRadius: BorderRadius.circular(AppSpacing.radiusFull)),
+        width: 90,
+        height: 45,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        ),
       ),
     );
   }

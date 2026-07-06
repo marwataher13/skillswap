@@ -13,7 +13,7 @@ class ReviewService {
   Future<List<ReviewModel>> fetchUserReviews(int userId) async {
     final url = Uri.parse('$_baseUrl/api/users/$userId/reviews');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
@@ -46,7 +46,7 @@ class ReviewService {
         'rating': rating.toInt(),
         'comment': comment,
       }),
-    ).timeout(const Duration(seconds: 15));
+    ).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final decoded = jsonDecode(response.body);
@@ -65,7 +65,7 @@ class ReviewService {
   Future<ReviewModel> fetchReviewDetails(int id) async {
     final url = Uri.parse('$_baseUrl/api/reviews/$id');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.get(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
@@ -84,7 +84,7 @@ class ReviewService {
   Future<void> deleteReview(int id) async {
     final url = Uri.parse('$_baseUrl/api/reviews/$id');
     final headers = await AuthService.getAuthHeaders();
-    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 15));
+    final response = await http.delete(url, headers: headers).timeout(const Duration(seconds: 300));
 
     if (response.statusCode != 200 && response.statusCode != 204) {
       _handleErrorResponse(response);

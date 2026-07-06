@@ -27,7 +27,7 @@ class ChatService {
     try {
       final response = await http
           .get(Uri.parse(url), headers: headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       debugPrint('ChatService: ${response.statusCode} body: ${response.body}');
 
@@ -62,7 +62,7 @@ class ChatService {
     try {
       final response = await http
           .get(Uri.parse(url), headers: headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       debugPrint('ChatService: ${response.statusCode}');
 
@@ -104,7 +104,7 @@ class ChatService {
     try {
       final response = await http
           .post(Uri.parse(url), headers: headers, body: jsonEncode({'body': body}))
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       debugPrint('ChatService: ${response.statusCode}');
 
@@ -141,7 +141,7 @@ class ChatService {
     try {
       final response = await http
           .delete(Uri.parse(url), headers: headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       debugPrint('ChatService: ${response.statusCode}');
 
@@ -176,7 +176,7 @@ class ChatService {
               'swap_request_id': swapRequestId,
             }),
           )
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       debugPrint('ChatService: ${response.statusCode}');
 
@@ -207,7 +207,7 @@ class ChatService {
     try {
       await http
           .post(Uri.parse(url), headers: headers)
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 300));
     } catch (e) {
       debugPrint('ChatService markAsRead error: $e');
     }
@@ -222,7 +222,7 @@ class ChatService {
     try {
       final response = await http
           .get(Uri.parse(url), headers: headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 300));
 
       if (response.statusCode != 200) return 0;
 

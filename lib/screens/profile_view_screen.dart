@@ -6,10 +6,13 @@ import 'package:skillswap/models/profile_models.dart';
 import 'package:skillswap/models/review_model.dart';
 import 'package:skillswap/providers/profile_provider.dart';
 import 'package:skillswap/services/profile_service.dart';
+import 'package:skillswap/services/time_slot_service.dart';
 import 'package:skillswap/widgets/portfolio_section.dart';
 import 'package:skillswap/widgets/add_review_bottom_sheet.dart';
 import 'package:skillswap/providers/swap_request_provider.dart';
 import 'package:skillswap/providers/review_provider.dart';
+import 'package:skillswap/models/time_slot_model.dart';
+import 'package:skillswap/widgets/time_slot_section.dart';
 import '../theme/app_theme.dart';
 
 /// Read-only view of a user's profile, portfolio, skills, and reviews.
@@ -28,6 +31,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 
   Map<String, dynamic>? _otherUserData;
   List<PortfolioItem> _otherUserPortfolio = [];
+  List<TimeSlotModel> _otherUserTimeSlots = [];
 
   bool _isInitialized = false;
   int? _resolvedUserId;
@@ -60,7 +64,12 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
       _loadingError = null;
     });
     try {
-      final data = await _profileService.fetchUserProfile(userId);
+      final results = await Future.wait([
+        _profileService.fetchUserProfile(userId),
+        TimeSlotService().getUserTimeSlots(userId),
+      ]);
+      final data = results[0] as Map<String, dynamic>;
+      final slots = results[1] as List<TimeSlotModel>;
       final rawFiles = data['portfolio_files'] ?? data['portfolio'] ?? [];
       List<PortfolioItem> portfolio = [];
       if (rawFiles is List) {
@@ -72,6 +81,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
         setState(() {
           _otherUserData = data;
           _otherUserPortfolio = portfolio;
+          _otherUserTimeSlots = slots;
           _isLoadingOtherUser = false;
         });
       }
@@ -196,6 +206,16 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                     _buildSkillsSection(teachSkills, learnSkills, c),
                     const SizedBox(height: 12),
                   ],
+                  Align(
+                    child: _sectionLabel('AVAILABILITY', c),
+                  ),
+                  const SizedBox(height: 12),
+                  TimeSlotSection(
+                    userId: _resolvedUserId,
+                    isReadOnly: !isMe,
+                    initialSlots: isMe ? null : _otherUserTimeSlots,
+                  ),
+                  const SizedBox(height: 28),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: _sectionLabel('PORTFOLIO', c),

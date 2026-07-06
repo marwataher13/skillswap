@@ -4,18 +4,20 @@ import 'package:skillswap/theme/app_theme.dart';
 
 class TimeSlotCard extends StatelessWidget {
   final TimeSlotModel slot;
+  final bool isReadOnly;
   final bool isToggling;
-  final VoidCallback onToggle;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback? onToggle;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const TimeSlotCard({
     super.key,
     required this.slot,
-    required this.isToggling,
-    required this.onToggle,
-    required this.onEdit,
-    required this.onDelete,
+    this.isReadOnly = false,
+    this.isToggling = false,
+    this.onToggle,
+    this.onEdit,
+    this.onDelete,
   });
 
   String get _dayAbbr {
@@ -82,37 +84,39 @@ class TimeSlotCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                isToggling
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(color: c.primary, strokeWidth: 2),
-                      )
-                    : GestureDetector(
-                        onTap: onToggle,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: 38,
-                          height: 22,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                            gradient: available
-                                ? LinearGradient(colors: [c.gradientStart, c.gradientEnd])
-                                : null,
-                            color: available ? null : c.surfaceVariant,
-                          ),
-                          child: AnimatedAlign(
+                if (!isReadOnly) ...[
+                  isToggling
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(color: c.primary, strokeWidth: 2),
+                        )
+                      : GestureDetector(
+                          onTap: onToggle,
+                          child: AnimatedContainer(
                             duration: const Duration(milliseconds: 250),
-                            alignment: available ? Alignment.centerRight : Alignment.centerLeft,
-                            child: Container(
-                              width: 18,
-                              height: 18,
-                              margin: const EdgeInsets.symmetric(horizontal: 2),
-                              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                            width: 38,
+                            height: 22,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                              gradient: available
+                                  ? LinearGradient(colors: [c.gradientStart, c.gradientEnd])
+                                  : null,
+                              color: available ? null : c.surfaceVariant,
+                            ),
+                            child: AnimatedAlign(
+                              duration: const Duration(milliseconds: 250),
+                              alignment: available ? Alignment.centerRight : Alignment.centerLeft,
+                              child: Container(
+                                width: 18,
+                                height: 18,
+                                margin: const EdgeInsets.symmetric(horizontal: 2),
+                                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                ],
               ],
             ),
             const SizedBox(height: 12),
@@ -155,18 +159,22 @@ class TimeSlotCard extends StatelessWidget {
                 ),
               ),
             ),
-            const Spacer(),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionBtn(icon: Icons.edit_outlined, label: 'Edit', onTap: onEdit, color: c.primary),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: _ActionBtn(icon: Icons.delete_outline_rounded, label: 'Delete', onTap: onDelete, color: c.error),
-                ),
-              ],
-            ),
+            if (!isReadOnly) ...[
+              const Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionBtn(icon: Icons.edit_outlined, label: 'Edit', onTap: onEdit!, color: c.primary),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _ActionBtn(icon: Icons.delete_outline_rounded, label: 'Delete', onTap: onDelete!, color: c.error),
+                  ),
+                ],
+              ),
+            ] else ...[
+              const SizedBox(height: 14),
+            ],
           ],
         ),
       ),

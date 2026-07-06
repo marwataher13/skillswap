@@ -205,7 +205,7 @@ class SettingsScreen extends StatelessWidget {
             context,
             icon: LucideIcons.info,
             label: 'About SkillSwap',
-            onTap: () => _showComingSoonSnackBar(context, 'About SkillSwap'),
+            onTap: () => Navigator.pushNamed(context, '/about'),
           ),
           Divider(
             height: 1,
@@ -343,18 +343,6 @@ class SettingsScreen extends StatelessWidget {
           ],
         );
       },
-    );
-  }
-
-  void _showComingSoonSnackBar(BuildContext context, String featureName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$featureName feature coming soon! 🚀'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
     );
   }
 }

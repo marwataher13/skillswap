@@ -10,6 +10,7 @@ import 'package:file_picker/file_picker.dart' as fp;
 import '../widgets/profile_form.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/portfolio_section.dart';
+import '../widgets/time_slot_section.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -84,6 +85,8 @@ class _ProfileBody extends StatelessWidget {
           _sectionLabel('Portfolio', c),
           const SizedBox(height: 12),
           const PortfolioSection(),
+
+          // FAB clearance
           const SizedBox(height: 100),
         ],
       ),

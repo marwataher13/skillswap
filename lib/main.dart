@@ -8,6 +8,7 @@ import 'package:skillswap/providers/notification_provider.dart';
 import 'package:skillswap/providers/chat_provider.dart';
 import 'package:skillswap/providers/swap_request_provider.dart';
 import 'package:skillswap/providers/theme_provider.dart';
+import 'package:skillswap/providers/assistant_provider.dart';
 import 'package:skillswap/screens/profile_screen.dart';
 import 'package:skillswap/screens/profile_view_screen.dart';
 import 'package:skillswap/screens/skill_details_screen.dart';
@@ -27,6 +28,8 @@ import 'screens/new_password_screen.dart';
 import 'screens/password_reset_success_screen.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
+import 'screens/ai_chat_screen.dart';
+import 'package:skillswap/screens/about_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +45,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => SwapRequestProvider()),
+        ChangeNotifierProvider(create: (_) => AssistantProvider()),
       ],
       child: const SkillSwapApp(),
     ),
@@ -83,6 +87,8 @@ class SkillSwapApp extends StatelessWidget {
         '/categories': (context) => const CategoriesDashboardScreen(),
         '/search': (context) => const AdvancedSearchScreen(),
         '/notifications': (context) => const NotificationsScreen(),
+        '/ai-chat': (context) => const AIChatScreen(),
+        '/about': (context) => const AboutScreen(),
       },
     ),
     );

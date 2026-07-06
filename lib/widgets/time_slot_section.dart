@@ -1,12 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:skillswap/models/time_slot_model.dart';
+import 'package:skillswap/providers/profile_provider.dart';
 import 'package:skillswap/services/time_slot_service.dart';
 import 'package:skillswap/theme/app_theme.dart';
 import 'package:skillswap/widgets/time_slot_card.dart';
 import 'package:skillswap/widgets/time_slot_bottom_sheet.dart';
 
 class TimeSlotSection extends StatefulWidget {
-  const TimeSlotSection({super.key});
+  final int? userId;
+  final bool isReadOnly;
+  final List<TimeSlotModel>? initialSlots;
+
+  const TimeSlotSection({
+    super.key,
+    this.userId,
+    this.isReadOnly = false,
+    this.initialSlots,
+  });
 
   @override
   State<TimeSlotSection> createState() => _TimeSlotSectionState();
@@ -24,7 +35,31 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.initialSlots != null) {
+      _slots = List.from(widget.initialSlots!);
+      _slots.sort(
+        (a, b) => TimeSlotModel.dayOrder(a.dayOfWeek).compareTo(TimeSlotModel.dayOrder(b.dayOfWeek)),
+      );
+      _isLoading = false;
+    } else {
+      _load();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant TimeSlotSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialSlots != null && widget.initialSlots != oldWidget.initialSlots) {
+      setState(() {
+        _slots = List.from(widget.initialSlots!);
+        _slots.sort(
+          (a, b) => TimeSlotModel.dayOrder(a.dayOfWeek).compareTo(TimeSlotModel.dayOrder(b.dayOfWeek)),
+        );
+        _isLoading = false;
+      });
+    } else if (widget.userId != oldWidget.userId && widget.initialSlots == null) {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -33,7 +68,20 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
       _error = null;
     });
     try {
-      final slots = await _service.getMyTimeSlots();
+      int? resolvedUserId = widget.userId;
+      if (resolvedUserId == null) {
+        try {
+          resolvedUserId = context.read<ProfileProvider>().profile.id;
+        } catch (_) {}
+      }
+
+      final List<TimeSlotModel> slots;
+      if (resolvedUserId != null && resolvedUserId != 0) {
+        slots = await _service.getUserTimeSlots(resolvedUserId);
+      } else {
+        slots = await _service.getMyTimeSlots();
+      }
+
       if (!mounted) return;
       setState(() {
         _slots = slots;
@@ -64,14 +112,15 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
       setState(() {
         _slots = _slots.map((s) => s.id == updated.id ? updated : s).toList();
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _slots = _slots
             .map((s) => s.id == slot.id ? s.copyWith(isAvailable: slot.isAvailable) : s)
             .toList();
       });
-      _showError('Failed to update availability');
+      final cleanMsg = e.toString().replaceFirst('Exception: ', '');
+      _showError(cleanMsg.isNotEmpty ? cleanMsg : 'Failed to update availability');
     } finally {
       if (mounted) setState(() => _toggling.remove(slot.id));
     }
@@ -109,9 +158,10 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
       if (!mounted) return;
       setState(() => _slots = _slots.where((s) => s.id != slot.id).toList());
       _showSuccess('Time slot removed');
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      _showError('Failed to delete. Try again.');
+      final cleanMsg = e.toString().replaceFirst('Exception: ', '');
+      _showError(cleanMsg.isNotEmpty ? cleanMsg : 'Failed to delete. Try again.');
     }
   }
 
@@ -172,23 +222,27 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Available Time Slots', style: AppTextStyles.titleMedium),
-                    Text('Your weekly availability', style: AppTextStyles.labelSmall),
+                    Text(
+                      widget.isReadOnly ? 'Weekly availability slots' : 'Your weekly availability',
+                      style: AppTextStyles.labelSmall,
+                    ),
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: _openAdd,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [c.gradientStart, c.gradientEnd]),
-                    shape: BoxShape.circle,
-                    boxShadow: AppShadows.button,
+              if (!widget.isReadOnly)
+                GestureDetector(
+                  onTap: _openAdd,
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [c.gradientStart, c.gradientEnd]),
+                      shape: BoxShape.circle,
+                      boxShadow: AppShadows.button,
+                    ),
+                    child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
                   ),
-                  child: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
                 ),
-              ),
             ],
           ),
         ),
@@ -199,7 +253,7 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
   }
 
   Widget _buildContent(AppColorsExtension c) {
-    if (_isLoading) return const _BuildShimmer();
+    if (_isLoading) return _BuildShimmer(isReadOnly: widget.isReadOnly);
     if (_error != null) return _buildError(c);
     if (_slots.isEmpty) return _buildEmpty(c);
     return _buildList();
@@ -256,23 +310,31 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
               child: const Icon(Icons.schedule_rounded, color: Colors.white, size: 32),
             ),
             const SizedBox(height: 14),
-            Text('No time slots yet', style: AppTextStyles.titleMedium, textAlign: TextAlign.center),
+            Text(
+              widget.isReadOnly ? 'No availability' : 'No time slots yet',
+              style: AppTextStyles.titleMedium,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 6),
             Text(
-              'Add your availability so others\ncan schedule with you.',
+              widget.isReadOnly
+                  ? 'This user has not set their availability yet.'
+                  : 'Add your availability so others\ncan schedule with you.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 18),
-            SizedBox(
-              width: 160,
-              child: ElevatedButton.icon(
-                onPressed: _openAdd,
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add Slot'),
-                style: ElevatedButton.styleFrom(minimumSize: const Size(160, 44)),
+            if (!widget.isReadOnly) ...[
+              const SizedBox(height: 18),
+              SizedBox(
+                width: 160,
+                child: ElevatedButton.icon(
+                  onPressed: _openAdd,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add Slot'),
+                  style: ElevatedButton.styleFrom(minimumSize: const Size(160, 44)),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -281,7 +343,7 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
 
   Widget _buildList() {
     return SizedBox(
-      height: 210,
+      height: widget.isReadOnly ? 150 : 210,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(20, 0, 8, 4),
@@ -291,6 +353,7 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
           final slot = _slots[i];
           return TimeSlotCard(
             slot: slot,
+            isReadOnly: widget.isReadOnly,
             isToggling: _toggling.contains(slot.id),
             onToggle: () => _toggle(slot),
             onEdit: () => _openEdit(slot),
@@ -303,24 +366,26 @@ class _TimeSlotSectionState extends State<TimeSlotSection> {
 }
 
 class _BuildShimmer extends StatelessWidget {
-  const _BuildShimmer();
+  final bool isReadOnly;
+  const _BuildShimmer({this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 190,
+      height: isReadOnly ? 130 : 190,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: 3,
-        itemBuilder: (context, index) => const _ShimmerCard(),
+        itemBuilder: (context, index) => _ShimmerCard(isReadOnly: isReadOnly),
       ),
     );
   }
 }
 
 class _ShimmerCard extends StatefulWidget {
-  const _ShimmerCard();
+  final bool isReadOnly;
+  const _ShimmerCard({this.isReadOnly = false});
 
   @override
   State<_ShimmerCard> createState() => _ShimmerCardState();
@@ -351,7 +416,7 @@ class _ShimmerCardState extends State<_ShimmerCard> with SingleTickerProviderSta
       animation: _anim,
       builder: (context, child) => Container(
         width: 168,
-        height: 190,
+        height: widget.isReadOnly ? 130 : 190,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           color: Color.lerp(c.surfaceVariant, c.surface, _anim.value),
